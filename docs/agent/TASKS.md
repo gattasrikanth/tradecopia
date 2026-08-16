@@ -74,6 +74,6 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | A-02 | Engine account snapshot; no fixture fallback | DONE |
 | A-03 | Draft → validate → activate → persist → non-live enable | DONE |
 | A-04 | Tests for classification, no-fixture, stale activate, fail-closed enable | DONE |
-| A-05 | `v0.1.0-alpha.4` pre-release + install that exact EXE | IN_PROGRESS |
+| A-05 | `v0.1.0-alpha.4` pre-release + install that exact EXE | DONE |
 
 See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14 and `docs/reports/2026-08-16-real-accounts-dashboard.md`.

@@ -24,13 +24,14 @@ Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.4
 
 | Check | Result |
 | --- | --- |
-| `pwsh ./scripts/test.ps1` ×2 | exit 0 (171 tests) |
+| `pwsh ./scripts/test.ps1` ×2 | exit 0 |
 | scan-secrets | OK |
-| Installed bind | `127.0.0.1:17841` |
-| Disconnected accounts/status | no fixture account keys; `copyingEnabled=false` |
-| Connected accounts/status | recorded after NT + engine (identifiers redacted) |
-| CSRF POST without token | not 2xx |
+| Installed bind | `127.0.0.1:17841` via Start Menu launcher |
+| Disconnected accounts/status | `source=disconnected`, empty accounts, no fixture keys; `copyingEnabled=false` |
+| Connected accounts/status | `engineConnected=true`, `copyingEnabled=false`; engine source; Simulation + DemoPaper accounts selectable; no `SIM-LEADER-01` |
+| CSRF POST without token | 403 |
 | POST `/api/v1/orders` | 404 `no-generic-order-entry` |
+| CI | `ci` job green on tip `bd25d22` |
 
 ## Owner-only next step
 
