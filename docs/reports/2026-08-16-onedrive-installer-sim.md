@@ -10,7 +10,8 @@ Repository: https://github.com/gattasrikanth/tradecopia
 - Installer / SIM gate: `4014a65`
 - Parent before this report slice: `ea3dc62`
 - Report + payload embed: `0c783de`
-- Linux CI path-test fix / `origin/main` tip at verification: `727aaae`
+- Linux CI path-test fix: `727aaae`
+- Start Menu launcher shortcut + uninstall: `467a244`
 
 ## OneDrive / Documents
 
@@ -25,8 +26,8 @@ Repository: https://github.com/gattasrikanth/tradecopia
 ## Installer
 
 - Technology: testable `TradeCopia.Installer` engine + self-contained `TradeCopia-Setup-0.1.0-alpha.1.exe` ([ADR-0007](../adr/ADR-0007-windows-installer.md)).
-- Artifact: `TradeCopia-Setup-0.1.0-alpha.1.exe` (single-file; payload zip embedded).
-- SHA-256: `05D1087C2D158F537D0DB751E6255F5C531F2C7047151E480664E68CC252D5B3`
+- Artifact: `TradeCopia-Setup-0.1.0-alpha.1.exe` (single-file; payload zip embedded). Rebuilt from `467a244` so Start Menu opens `TradeCopia.Launcher.exe` and uninstall removes the menu folder.
+- SHA-256: `EF8188515B8E07DD9C64AE8CE1DEA7F683903C0374E7F9416B26BB90F1701AFA`
 - No NinjaTrader proprietary DLLs in the package.
 - Cloud-backed NT user-data is a blocking preflight. No Install Anyway.
 - Companion: per-user mutex ([ADR-0008](../adr/ADR-0008-companion-lifecycle.md)).
