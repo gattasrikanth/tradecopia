@@ -1,6 +1,6 @@
 # Task board
 
-Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
+Status values: `TODO` | `DONE` | `DONE` | `BLOCKED`.
 
 ## Phase 0 — Repository, governance, and agent continuity
 
@@ -76,6 +76,6 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | A-04 | Tests for classification, no-fixture, stale activate, fail-closed enable | DONE |
 | A-05 | `v0.1.0-alpha.5` pre-release + install that exact EXE | DONE |
 | A-06 | First-trade UX + `v0.1.0-alpha.6` pre-release + install | DONE |
-| A-07 | One-card Save & Activate + SIM→Demo pair + `v0.1.0-alpha.7` | IN_PROGRESS |
+| A-07 | One-card Save & Activate + SIM→Demo pair + `v0.1.0-alpha.7` | DONE |
 
 See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14 and `docs/reports/2026-08-16-real-accounts-dashboard.md`.
