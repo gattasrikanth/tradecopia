@@ -18,6 +18,7 @@ public class InstallRoundtripTests
         Directory.CreateDirectory(custom);
         File.WriteAllText(Path.Combine(payload, "app", "TradeCopia.ControlPlane.exe"), "cp");
         File.WriteAllText(Path.Combine(payload, "app", ProductInfo.LauncherExe), "launcher");
+        File.WriteAllText(Path.Combine(payload, "app", "TradeCopia.Launcher.dll"), "launcher-impl");
         File.WriteAllText(Path.Combine(payload, "native", "TradeCopia.Native.dll"), "addon");
         File.WriteAllText(Path.Combine(payload, "native", "NinjaTrader.Core.dll"), "forbidden");
 
@@ -43,7 +44,9 @@ public class InstallRoundtripTests
         Assert.Contains("disabled", version);
 
         var launcherPath = Path.Combine(ProductLayout.AppDirectory(ProductLayout.PerUserRoot(local)), ProductInfo.LauncherExe);
+        var launcherDll = Path.Combine(ProductLayout.AppDirectory(ProductLayout.PerUserRoot(local)), "TradeCopia.Launcher.dll");
         Assert.True(File.Exists(launcherPath));
+        Assert.True(File.Exists(launcherDll));
         var menu = StartMenuInstall.ProductFolder(startMenu);
         var cmd = Path.Combine(menu, StartMenuInstall.CommandShortcutName);
         Assert.True(File.Exists(cmd));
@@ -58,6 +61,18 @@ public class InstallRoundtripTests
         Assert.True(Directory.Exists(ProductLayout.DataDirectory(ProductLayout.PerUserRoot(local))));
         Assert.False(Directory.Exists(menu));
         Assert.False(File.Exists(cmd));
+    }
+
+    [Fact]
+    public void Package_script_publishes_single_file_launcher_into_payload_app()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        var script = Path.Combine(root, "scripts", "package.ps1");
+        Assert.True(File.Exists(script), script);
+        var text = File.ReadAllText(script);
+        Assert.Contains("TradeCopia.Launcher.csproj", text);
+        Assert.Contains("PublishSingleFile=true", text);
+        Assert.Contains("TradeCopia.Launcher.*", text);
     }
 
     [Fact]

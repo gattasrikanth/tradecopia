@@ -10,6 +10,7 @@ first numbered release exists.
 
 ### Added
 
+- Package publishes a single-file `TradeCopia.Launcher` into the setup payload so Start Menu can start the companion without a missing DLL.
 - Start Menu "Open TradeCopia" launches `TradeCopia.Launcher.exe`; uninstall removes the TradeCopia Start Menu folder.
 - Setup embeds the install payload so `TradeCopia-Setup-*.exe` is a single customer file.
 - Windows Documents known-folder resolver and cloud-path preflight (`TradeCopia.Platform`).

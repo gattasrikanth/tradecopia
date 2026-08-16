@@ -24,9 +24,12 @@ dotnet publish "$root\src\ControlPlane\TradeCopia.ControlPlane\TradeCopia.Contro
     -o $appOut
 
 dotnet publish "$root\src\Installer\TradeCopia.Launcher\TradeCopia.Launcher.csproj" `
-    -c Release -r win-x64 --self-contained true -o (Join-Path $OutputDir 'launcher')
+    -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true `
+    -o (Join-Path $OutputDir 'launcher')
 
-Copy-Item -Force (Join-Path $OutputDir 'launcher\TradeCopia.Launcher.exe') $appOut -ErrorAction SilentlyContinue
+Get-ChildItem (Join-Path $OutputDir 'launcher') -Filter 'TradeCopia.Launcher.*' | ForEach-Object {
+    Copy-Item -Force $_.FullName $appOut
+}
 
 $ntCore = Join-Path ${env:ProgramFiles} 'NinjaTrader 8\bin\NinjaTrader.Core.dll'
 if (Test-Path $ntCore) {
