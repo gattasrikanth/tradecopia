@@ -27,7 +27,7 @@ Repository: https://github.com/gattasrikanth/tradecopia
 
 - Technology: testable `TradeCopia.Installer` engine + self-contained `TradeCopia-Setup-0.1.0-alpha.1.exe` ([ADR-0007](../adr/ADR-0007-windows-installer.md)).
 - Artifact: `TradeCopia-Setup-0.1.0-alpha.1.exe` (single-file; payload zip embedded). Rebuilt from `467a244` so Start Menu opens `TradeCopia.Launcher.exe` and uninstall removes the menu folder.
-- SHA-256: `EF8188515B8E07DD9C64AE8CE1DEA7F683903C0374E7F9416B26BB90F1701AFA`
+- SHA-256: `E4BC287500F8198730A3BC815A0B50AE2A6C58BAA0A0657CBD27278CA6131F4E` (replaced `EF818851…` after the launcher DLL defect)
 - No NinjaTrader proprietary DLLs in the package.
 - Cloud-backed NT user-data is a blocking preflight. No Install Anyway.
 - Companion: per-user mutex ([ADR-0008](../adr/ADR-0008-companion-lifecycle.md)).

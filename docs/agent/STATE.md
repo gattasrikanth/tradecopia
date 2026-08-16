@@ -3,42 +3,28 @@
 Last updated: 2026-08-16
 Current branch: main
 HEAD: see `git rev-parse HEAD` (do not add pin-only SHA commits)
-Current phase: Installer / OneDrive / SIM-certification plan
-Phase status: COMPLETE_ALPHA (independent work). Not Stable. Not live-certified.
+Current phase: Customer install / experience certification
+Phase status: INSTALL_CERTIFIED_ALPHA. Not Stable. Not live-certified.
 
 ## Completed
 
-- Documents known folder is local (`%USERPROFILE%\Documents`), not OneDrive.
-- NinjaTrader 8 user-data copied to the local Documents tree; OneDrive copy retained; backup under local `TradeCopia-Backups`.
-- Known-folder resolver + cloud-path preflight; setup blocks OneDrive NT trees.
-- Per-user installer engine, setup host, launcher, companion mutex.
-- No-F5 native deploy copies `TradeCopia.*` only into `bin\Custom`.
-- SIM native submit gated on official `Provider` Simulator/Playback; live/unknown fail closed.
-- Dogfood install from setup on this machine; copying starts disabled.
-- Published Alpha setup: `TradeCopia-Setup-0.1.0-alpha.1.exe` SHA-256 `EF8188515B8E07DD9C64AE8CE1DEA7F683903C0374E7F9416B26BB90F1701AFA` (GitHub pre-release `v0.1.0-alpha.1`). Start Menu opens `TradeCopia.Launcher.exe`; uninstall removes the Start Menu folder.
+- Customer install certified from GitHub Release `v0.1.0-alpha.1`.
+- Published setup SHA-256: `E4BC287500F8198730A3BC815A0B50AE2A6C58BAA0A0657CBD27278CA6131F4E`.
+- Start Menu launches installed single-file `TradeCopia.Launcher.exe`; companion starts; copying disabled; loopback only.
+- Launcher apphost-without-DLL defect fixed in `package.ps1` (`4499ff6`) and the release asset was replaced.
 
 ## Current invariants / locked decisions
 
 - Copying starts disabled. No generic order-entry API.
 - Bind 127.0.0.1 only. CSRF required on POST.
-- Simulation identity fail-closed at the native execution boundary.
-- Cloud-backed NinjaTrader user-data is unsupported for normal install.
-- NinjaTrader Welcome login is owned by Windows Trading Backbone, not TradeCopia.
-
-## Tests last run
-
-Recorded in the implementation report for this slice.
+- NinjaTrader Welcome login is owned by Windows Trading Backbone.
 
 ## Known blockers
 
-- Public CI cannot compile NT-referenced AddOn (no proprietary assemblies).
-- Manual owner SIM trade matrix (S1–S10) remains owner-only.
-- Unsigned Alpha may show SmartScreen/UAC (owner).
-
-## Active subagents/worktrees
-
-- none
+- Manual first SIM trade (and full S1–S10) is owner-only.
+- Public CI cannot compile NT-referenced AddOn.
+- Unsigned Alpha may show SmartScreen/UAC.
 
 ## Next exact action
 
-Owner-only: backbone NT login after reboot if needed; run `docs/testing/manual-sim-certification.md` on SIM accounts. Do not label Stable.
+Owner: start NinjaTrader via Windows Trading Backbone, then one MNQ SIM leader → SIM follower market order. Do not label Stable.
