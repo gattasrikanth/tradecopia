@@ -6,7 +6,7 @@
 
 - Starting `main` at goal resume: `eaa0ba190229f1e8ef38bf23860c39246ca8954c`
 - Feature tip (named-pipe + fail-closed pause/disable + domain coverage gate): `8b1d2938a86128bf1a99f2ca6f150eccce561f26`
-- `docs/agent/STATE.md` HEAD must match `origin/main` tip after the commit that updates this file.
+- Agent-state sync commit on `main`: `494005bbecc1727d0dbf0b54d6faff6378ba6c9b` (and any subsequent docs-only STATE HEAD pin).
 
 Repository: https://github.com/gattasrikanth/tradecopia
 
