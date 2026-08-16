@@ -6,7 +6,7 @@
 
 - Starting `main` at goal resume: `eaa0ba190229f1e8ef38bf23860c39246ca8954c`
 - Feature tip (named-pipe + fail-closed pause/disable + domain coverage gate): `8b1d2938a86128bf1a99f2ca6f150eccce561f26`
-- Agent-state sync commit on `main`: `494005bbecc1727d0dbf0b54d6faff6378ba6c9b` (and any subsequent docs-only STATE HEAD pin).
+- Verified `origin/main` tip at last full verification: `e97f3792d38bdfe35353b7fd81b8f94a7ee8a334`
 
 Repository: https://github.com/gattasrikanth/tradecopia
 

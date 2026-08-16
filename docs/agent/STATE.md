@@ -1,8 +1,8 @@
 # Agent State
 
-Last updated: 2026-08-16T21:10:00Z
+Last updated: 2026-08-16T21:40:00Z
 Current branch: main
-HEAD: 1b6b24b2f6d7f48b47abd492417d8b157b20ca4f
+HEAD: e97f3792d38bdfe35353b7fd81b8f94a7ee8a334
 Current phase: Phase 12
 Phase status: COMPLETE_ALPHA
 
@@ -22,8 +22,11 @@ Phase status: COMPLETE_ALPHA
 
 ## Tests last run
 
-- Domain.UnitTests 98 passed; coverlet ~95.5/91.4
-- Named-pipe + control-plane fail-closed tests passed locally
+- `pwsh ./scripts/test.ps1` ×2: 128 passed
+- Domain coverlet line 95.52% / branch 91.41%
+- Playwright dashboard.spec.ts: 1 passed
+- Control-plane probe ×2: pause no CSRF 403; pause+CSRF 503; POST /orders 404
+- `ci` on e97f379: success
 
 ## Known blockers
 
