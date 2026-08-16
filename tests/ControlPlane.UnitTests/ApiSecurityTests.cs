@@ -27,6 +27,21 @@ public class ApiSecurityTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public void Isolated_args_do_not_use_customer_data_or_user_pipe()
+    {
+        var options = ControlPlaneOptions.FromArgs(new[]
+        {
+            "--port=17842",
+            "--pipe=TradeCopia.E2E.isolated",
+            "--data=C:\\temp\\tradecopia-e2e"
+        });
+        Assert.Equal(17842, options.Port);
+        Assert.Equal("TradeCopia.E2E.isolated", options.PipeName);
+        Assert.Equal("C:\\temp\\tradecopia-e2e", options.DataDirectory);
+        Assert.False(options.DemoMode);
+    }
+
+    [Fact]
     public void Loopback_bind_rejects_unspecified()
     {
         Assert.False(LoopbackGuard.IsLoopbackBind("0.0.0.0"));

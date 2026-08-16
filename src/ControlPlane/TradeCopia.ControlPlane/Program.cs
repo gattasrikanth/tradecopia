@@ -4,6 +4,7 @@ using TradeCopia.ControlPlane;
 using TradeCopia.ControlPlane.Commands;
 using TradeCopia.ControlPlane.Demo;
 using TradeCopia.ControlPlane.Groups;
+using TradeCopia.ControlPlane.Presentation;
 using TradeCopia.ControlPlane.Security;
 using TradeCopia.Persistence;
 using TradeCopia.Protocol;
@@ -30,7 +31,7 @@ if (string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparis
         PipeName = TradeCopia.Protocol.EnginePipeName.FromMaterial("testing-" + Guid.NewGuid().ToString("N"))
     };
 }
-else
+else if (options.Port == ControlPlaneOptions.DefaultPort)
 {
     singleInstance = new Mutex(true, @"Local\TradeCopia.ControlPlane.v1", out var createdNew);
     if (!createdNew)
@@ -65,8 +66,38 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 var api = app.MapGroup("/api/v1");
-api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine) =>
-    Results.Json(new
+api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine, GroupConfigStore store) =>
+{
+    var active = store.List().FirstOrDefault(g => g.Status == "active");
+    EngineAccountRecord? leader = null;
+    var followers = new List<EngineAccountRecord>();
+    if (active != null)
+    {
+        leader = engine.Accounts.FirstOrDefault(a => a.StableKey == active.LeaderKey);
+        followers = engine.Accounts.Where(a => active.FollowerKeys.Contains(a.StableKey)).ToList();
+    }
+
+    var topologyOk = active != null && GroupConfigStore.ValidateCore(active, engine.Accounts) == null;
+    var preflight = CustomerPresentation.Preflight(
+        engine.IsConnected,
+        engine.CopyingEnabled,
+        leader,
+        followers,
+        active?.Sizing ?? CustomerPresentation.DefaultSizing(),
+        topologyOk,
+        blockingDivergence: false);
+    var alerts = new List<CustomerAlert>();
+    if (!engine.CopyingEnabled)
+    {
+        alerts.Add(new CustomerAlert
+        {
+            Severity = "warning",
+            Title = "Copying starts disabled",
+            Message = "This dashboard cannot place discretionary trades."
+        });
+    }
+
+    return Results.Json(new
     {
         opt.Port,
         opt.BindAddress,
@@ -74,6 +105,16 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine) =>
         engineConnected = engine.IsConnected,
         engineState = engine.EngineState,
         copyingEnabled = engine.CopyingEnabled,
+        presentation = new
+        {
+            engine = CustomerPresentation.EngineStateLabel(engine.IsConnected, engine.EngineState),
+            copying = CustomerPresentation.CopyingLabel(engine.CopyingEnabled),
+            environment = "SIM / DEMO ONLY",
+            headline = CustomerPresentation.StatusHeadline(engine.IsConnected, engine.CopyingEnabled, preflight.Ready),
+            alerts,
+            alertHtml = CustomerPresentation.AlertHtml(alerts),
+            preflight
+        },
         details = new
         {
             product = "TradeCopia",
@@ -88,7 +129,8 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine) =>
             privacy = "local-only",
             telemetry = "none"
         }
-    }));
+    });
+});
 api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.5", commit = "local" }));
 api.MapGet("/system/health", () => Results.Json(new { status = "ok", copying = "disabled" }));
 api.MapGet("/system/capabilities", () => Results.Json(new
@@ -109,26 +151,57 @@ api.MapGet("/accounts", (EngineLink engine) =>
         {
             source = "disconnected",
             accounts = Array.Empty<object>(),
-            error = "engine-disconnected"
+            error = "engine-disconnected",
+            message = CustomerPresentation.DisconnectedMessage()
         });
     }
 
+    var choices = CustomerPresentation.Choices(engine.Accounts, null);
     return Results.Json(new
     {
         source = "engine",
-        accounts = engine.Accounts.Select(a => new
+        message = (string?)null,
+        accounts = engine.Accounts.Select(a =>
         {
-            a.StableKey,
-            a.DisplayName,
-            a.Provider,
-            a.OfficialMode,
-            a.IsDemo,
-            safetyClass = a.SafetyClass.ToString(),
-            a.Selectable
+            var choice = choices.First(c => c.StableKey == a.StableKey);
+            return new
+            {
+                a.StableKey,
+                a.DisplayName,
+                a.Provider,
+                a.OfficialMode,
+                a.IsDemo,
+                safetyClass = a.SafetyClass.ToString(),
+                safetyLabel = choice.SafetyLabel,
+                eligibilityLabel = choice.EligibilityLabel,
+                connectionLabel = choice.ConnectionLabel,
+                lockReason = choice.LockReason,
+                availableAsLeader = choice.AvailableAsLeader,
+                availableAsFollower = choice.AvailableAsFollower,
+                a.Selectable
+            };
         })
     });
 });
-api.MapGet("/groups", (GroupConfigStore store) => Results.Json(store.List()));
+api.MapGet("/groups", (GroupConfigStore store, EngineLink engine) =>
+{
+    var accounts = engine.Accounts;
+    return Results.Json(store.List().Select(g => new
+    {
+        g.Id,
+        g.Name,
+        g.LeaderKey,
+        g.FollowerKeys,
+        g.Sizing,
+        sizingLabel = CustomerPresentation.SizingLabel(g.Sizing),
+        g.Status,
+        g.Version,
+        leaderDisplayName = CustomerPresentation.DisplayNameFor(accounts, g.LeaderKey),
+        followerDisplayNames = g.FollowerKeys.Select(k => CustomerPresentation.DisplayNameFor(accounts, k)).ToList(),
+        pauseHelp = CustomerPresentation.PauseHelp(),
+        disableHelp = CustomerPresentation.DisableHelp()
+    }));
+});
 api.MapPost("/groups", async (HttpContext http, GroupConfigStore store) =>
 {
     var body = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(http.Request.Body) ?? new();
@@ -147,8 +220,50 @@ api.MapPost("/groups", async (HttpContext http, GroupConfigStore store) =>
         }
     }
 
-    var created = store.CreateDraft(name, leader, followers);
+    var sizing = body.TryGetValue("sizing", out var sz) ? sz.GetString() ?? CustomerPresentation.DefaultSizing() : CustomerPresentation.DefaultSizing();
+    var created = store.CreateDraft(name, leader, followers, sizing);
     return Results.Json(created);
+});
+api.MapPost("/groups/save-and-activate", async (HttpContext http, GroupConfigStore store, EngineLink engine) =>
+{
+    if (!engine.IsConnected)
+    {
+        return Results.Json(new { ok = false, error = "engine-disconnected" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    var body = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(http.Request.Body) ?? new();
+    var id = body.TryGetValue("id", out var idEl) ? idEl.GetString() : "";
+    var name = body.TryGetValue("name", out var n) ? n.GetString() ?? "" : "";
+    var leader = body.TryGetValue("leaderKey", out var l) ? l.GetString() ?? "" : "";
+    var sizing = body.TryGetValue("sizing", out var sz) ? sz.GetString() ?? CustomerPresentation.DefaultSizing() : CustomerPresentation.DefaultSizing();
+    var followers = new List<string>();
+    if (body.TryGetValue("followerKeys", out var f) && f.ValueKind == JsonValueKind.Array)
+    {
+        foreach (var item in f.EnumerateArray())
+        {
+            var v = item.GetString();
+            if (!string.IsNullOrWhiteSpace(v))
+            {
+                followers.Add(v);
+            }
+        }
+    }
+
+    var result = store.SaveAndActivate(id, name, leader, followers, sizing, engine.Accounts);
+    if (!result.Ok || result.Group == null)
+    {
+        return Results.Json(new { ok = false, error = result.Reason, group = result.Group }, statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    var payload = "{\"leader\":\"" + result.Group.LeaderKey + "\",\"followers\":[" +
+        string.Join(",", result.Group.FollowerKeys.Select(k => "\"" + k + "\"")) + "]}";
+    var pipe = engine.Send(ProtocolMessageTypes.ActivateConfig, payload);
+    if (!pipe.Accepted)
+    {
+        return Results.Json(new { ok = false, error = pipe.Reason, group = result.Group }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    return Results.Json(new { ok = true, group = result.Group });
 });
 api.MapPost("/groups/{groupId}/validate", (string groupId, GroupConfigStore store, EngineLink engine) =>
 {
@@ -200,13 +315,22 @@ api.MapPost("/groups/{groupId}/enable", (string groupId, GroupConfigStore store,
 api.MapGet("/live/trades", (EngineLink engine) => Results.Json(Array.Empty<object>()));
 api.MapGet("/live/orders", (EngineLink engine) => Results.Json(Array.Empty<object>()));
 api.MapGet("/live/divergences", (EngineLink engine) => Results.Json(Array.Empty<object>()));
-api.MapGet("/live/health", (EngineLink engine) => Results.Json(new
+api.MapGet("/live/health", (EngineLink engine, GroupConfigStore store) =>
 {
-    groupHealth = "UNKNOWN",
-    reason = engine.IsConnected
-        ? "Engine connected. Unknown is never healthy without a live group snapshot."
-        : "Engine disconnected. Unknown is never healthy."
-}));
+    var active = store.List().FirstOrDefault(g => g.Status == "active");
+    var ready = engine.IsConnected && active != null && GroupConfigStore.ValidateCore(active, engine.Accounts) == null;
+    return Results.Json(new
+    {
+        groupHealth = engine.IsConnected
+            ? (ready ? "Ready" : "Blocked")
+            : "Engine Disconnected",
+        reason = engine.IsConnected
+            ? (ready
+                ? "Active group is valid and the engine is connected."
+                : "Engine connected. Group is not ready for non-live copying.")
+            : "Engine disconnected."
+    });
+});
 api.MapGet("/journal/trades", (DemoCatalog demo) => Results.Json(demo.Journal()));
 api.MapGet("/analytics/overview", (DemoCatalog demo) => Results.Json(demo.Analytics()));
 api.MapGet("/analytics/latency", (DemoCatalog demo) => Results.Json(demo.Analytics()));

@@ -36,13 +36,14 @@ public sealed class GroupConfigStore
         }
     }
 
-    public GroupRecord CreateDraft(string name, string leaderKey, IEnumerable<string> followers)
+    public GroupRecord CreateDraft(string name, string leaderKey, IEnumerable<string> followers, string sizing = "OneToOne")
     {
         var record = new GroupRecord
         {
-            Name = string.IsNullOrWhiteSpace(name) ? "Copy group" : name.Trim(),
+            Name = string.IsNullOrWhiteSpace(name) ? "Primary" : name.Trim(),
             LeaderKey = leaderKey ?? "",
             FollowerKeys = followers?.Where(f => !string.IsNullOrWhiteSpace(f)).Distinct(StringComparer.Ordinal).ToList() ?? new List<string>(),
+            Sizing = string.IsNullOrWhiteSpace(sizing) ? "OneToOne" : sizing.Trim(),
             Status = "draft",
             Version = 1
         };
@@ -61,6 +62,63 @@ public sealed class GroupConfigStore
             var found = _groups.FirstOrDefault(g => g.Id == id);
             return found == null ? null : Clone(found);
         }
+    }
+
+    public GroupRecord? ReplaceDraft(string id, string name, string leaderKey, IEnumerable<string> followers, string sizing)
+    {
+        lock (_gate)
+        {
+            var group = _groups.FirstOrDefault(g => g.Id == id);
+            if (group == null)
+            {
+                return null;
+            }
+
+            group.Name = string.IsNullOrWhiteSpace(name) ? group.Name : name.Trim();
+            group.LeaderKey = leaderKey ?? "";
+            group.FollowerKeys = followers?.Where(f => !string.IsNullOrWhiteSpace(f)).Distinct(StringComparer.Ordinal).ToList() ?? new List<string>();
+            group.Sizing = string.IsNullOrWhiteSpace(sizing) ? group.Sizing : sizing.Trim();
+            Persist();
+            return Clone(group);
+        }
+    }
+
+    public (bool Ok, string Reason, GroupRecord? Group) SaveAndActivate(
+        string? id,
+        string name,
+        string leaderKey,
+        IEnumerable<string> followers,
+        string sizing,
+        IReadOnlyList<EngineAccountRecord> accounts)
+    {
+        GroupRecord draft;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            draft = CreateDraft(name, leaderKey, followers, sizing);
+        }
+        else
+        {
+            var updated = ReplaceDraft(id, name, leaderKey, followers, sizing);
+            if (updated == null)
+            {
+                return (false, "not-found", null);
+            }
+
+            draft = updated;
+        }
+
+        var validated = Validate(draft.Id, accounts);
+        if (!validated.Ok || validated.Group == null)
+        {
+            return (false, validated.Reason, validated.Group);
+        }
+
+        if (string.Equals(validated.Group.Status, "active", StringComparison.Ordinal))
+        {
+            return (false, "validate-must-not-activate", validated.Group);
+        }
+
+        return Activate(validated.Group.Id, validated.Group.Version, accounts);
     }
 
     public (bool Ok, string Reason, GroupRecord? Group) Validate(string id, IReadOnlyList<EngineAccountRecord> accounts)

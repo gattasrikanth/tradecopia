@@ -156,7 +156,64 @@ public class AccountAndGroupApiTests
         Assert.Contains("sim-1", body);
         Assert.Contains("demo-1", body);
         Assert.Contains("DemoPaper", body);
+        Assert.Contains("Demo / Paper", body);
         Assert.DoesNotContain("SIM-LEADER-01", body);
+    }
+
+    [Fact]
+    public async Task Save_and_activate_uses_engine_accounts_and_fails_closed()
+    {
+        await using var factory = new ApiFactory();
+        var options = factory.Services.GetRequiredService<TradeCopia.ControlPlane.ControlPlaneOptions>();
+        using var runtime = new EngineRuntime(options.PipeName);
+        runtime.PublishAccounts(new[]
+        {
+            new EngineAccountRecord("sim-1", "Sim101", "Simulator", "Simulation", false, AccountSafetyClass.Simulation),
+            new EngineAccountRecord("demo-1", "Personal Demo", "Provider31", "Live", true, AccountSafetyClass.DemoPaper)
+        });
+        runtime.Start();
+        var client = factory.CreateClient();
+        for (var i = 0; i < 40; i++)
+        {
+            var probe = await client.GetStringAsync("/api/v1/system/status");
+            if (probe.Contains("\"engineConnected\":true", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            await Task.Delay(50);
+        }
+
+        var boot = await client.GetFromJsonAsync<Bootstrap>("/api/v1/system/bootstrap");
+        client.DefaultRequestHeaders.Add("X-CSRF-Token", boot!.CsrfToken);
+        var fail = await client.PostAsJsonAsync("/api/v1/groups/save-and-activate", new
+        {
+            name = "Primary",
+            leaderKey = "sim-1",
+            followerKeys = new[] { "sim-1" },
+            sizing = "OneToOne"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, fail.StatusCode);
+        var failBody = await fail.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"status\":\"active\"", failBody);
+
+        var ok = await client.PostAsJsonAsync("/api/v1/groups/save-and-activate", new
+        {
+            name = "Primary",
+            leaderKey = "sim-1",
+            followerKeys = new[] { "demo-1" },
+            sizing = "OneToOne"
+        });
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var groups = await client.GetStringAsync("/api/v1/groups");
+        Assert.Contains("Sim101", groups);
+        Assert.Contains("Personal Demo", groups);
+        Assert.Contains("1 : 1", groups);
+        Assert.DoesNotContain("SIM-LEADER-01", groups);
+        var status = await client.GetStringAsync("/api/v1/system/status");
+        Assert.Contains("\"copyingEnabled\":false", status);
+        Assert.Contains("Copying Disabled", status);
+        Assert.Contains("SIM / DEMO ONLY", status);
     }
 
     private sealed class Bootstrap

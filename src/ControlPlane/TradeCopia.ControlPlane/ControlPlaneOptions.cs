@@ -21,6 +21,8 @@ public sealed class ControlPlaneOptions
     {
         var demo = false;
         var port = DefaultPort;
+        string? pipe = null;
+        string? data = null;
         foreach (var arg in args)
         {
             if (string.Equals(arg, "--demo", StringComparison.OrdinalIgnoreCase))
@@ -34,12 +36,26 @@ public sealed class ControlPlaneOptions
             {
                 port = parsed;
             }
+
+            if (arg.StartsWith("--pipe=", StringComparison.OrdinalIgnoreCase))
+            {
+                pipe = arg.Substring("--pipe=".Length);
+            }
+
+            if (arg.StartsWith("--data=", StringComparison.OrdinalIgnoreCase))
+            {
+                data = arg.Substring("--data=".Length);
+            }
         }
 
         return new ControlPlaneOptions
         {
             DemoMode = demo,
-            Port = port
+            Port = port,
+            PipeName = string.IsNullOrWhiteSpace(pipe) ? EnginePipeName.ForCurrentUser() : pipe,
+            DataDirectory = string.IsNullOrWhiteSpace(data)
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TradeCopia", "data")
+                : data
         };
     }
 }
