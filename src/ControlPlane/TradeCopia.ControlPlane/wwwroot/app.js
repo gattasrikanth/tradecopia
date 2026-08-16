@@ -8,7 +8,8 @@ async function api(path, options) {
   }
   const res = await fetch(path, Object.assign({}, options, { headers }));
   if (!res.ok) {
-    throw new Error(path + " failed: " + res.status);
+    var text = await res.text();
+    throw new Error(path + " failed: " + res.status + " " + text);
   }
   return res.json();
 }
@@ -25,32 +26,87 @@ function table(headers, rows) {
 
 const pages = {
   async overview() {
-    const [status, health, groups, divergences] = await Promise.all([
+    const [status, health, groups, accounts] = await Promise.all([
       api("/api/v1/system/status"),
       api("/api/v1/live/health"),
       api("/api/v1/groups"),
-      api("/api/v1/live/divergences")
+      api("/api/v1/accounts")
     ]);
     document.getElementById("status-pill").textContent = health.groupHealth;
     document.getElementById("alerts").innerHTML =
       "<div class=\"warning\">Copying starts disabled. This dashboard cannot place discretionary trades.</div>";
     var engineLabel = status.engineConnected ? status.engineState : "Unknown";
+    var discovered = (accounts && accounts.accounts) ? accounts.accounts : [];
+    var waiting = status.engineConnected ? (discovered.length + " discovered") : "waiting for NinjaTrader";
     render("Overview",
       "<div class=\"grid\">" +
       card("Engine", engineLabel) +
       card("Copying", status.copyingEnabled ? "Enabled" : "Disabled") +
       card("Engine link", status.engineConnected ? "Connected" : "Disconnected") +
-      card("Demo mode", String(status.demoMode)) +
+      card("Accounts", waiting) +
       "</div><h3>Groups</h3>" +
-      table(["Name", "Leader", "State", "Health"], groups.map((g) =>
-        "<tr><td>" + g.name + "</td><td>" + g.leader + "</td><td>" + g.enabledState + "</td><td>" + g.health + "</td></tr>")) +
-      "<h3>Alerts</h3>" + divergences.map((d) => "<div class=\"critical\">" + d.severity + " · " + d.account + " · " + d.detail + "</div>").join(""));
+      table(["Name", "Leader", "Status"], groups.map((g) =>
+        "<tr><td>" + g.name + "</td><td>" + (g.leaderKey || "") + "</td><td>" + (g.status || "") + "</td></tr>")));
   },
   async groups() {
-    const groups = await api("/api/v1/groups");
-    render("Copy Groups", table(["Name", "Leader", "Followers", "Mode", "State"], groups.map((g) =>
-      "<tr><td>" + g.name + "</td><td>" + g.leader + "</td><td>" + g.followers.join(", ") + "</td><td>" + g.copyMode + "</td><td>" + g.enabledState + "</td></tr>")) +
-      "<p class=\"sub\">Draft → validate → activate is required before any follower order can be generated.</p>");
+    const [groups, accounts] = await Promise.all([
+      api("/api/v1/groups"),
+      api("/api/v1/accounts")
+    ]);
+    const discovered = accounts.accounts || [];
+    const selectable = discovered.filter((a) => a.selectable);
+    const rows = groups.map((g) =>
+      "<tr><td>" + g.name + "</td><td>" + g.leaderKey + "</td><td>" + (g.followerKeys || []).join(", ") +
+      "</td><td>" + g.status + "</td><td>" + g.version +
+      "</td><td><button data-act=\"validate\" data-id=\"" + g.id + "\">Validate</button> " +
+      "<button data-act=\"activate\" data-id=\"" + g.id + "\" data-ver=\"" + g.version + "\">Activate</button> " +
+      "<button data-act=\"enable\" data-id=\"" + g.id + "\">Enable non-live</button></td></tr>");
+    const accountOpts = selectable.map((a) => "<option value=\"" + a.stableKey + "\">" + a.displayName + " (" + a.safetyClass + ")</option>").join("");
+    const followerBoxes = selectable.map((a) =>
+      "<label><input type=\"checkbox\" name=\"follower\" value=\"" + a.stableKey + "\"> " + a.displayName + " (" + a.safetyClass + ")</label><br>").join("");
+    const unavailable = accounts.error
+      ? "<p class=\"sub\">NinjaTrader engine disconnected. Launch/connect NinjaTrader to discover accounts.</p>"
+      : "";
+    render("Copy Groups",
+      unavailable +
+      "<p id=\"gerr\" class=\"critical\"></p>" +
+      "<h3>Discovered accounts</h3>" +
+      table(["Account", "Class", "Selectable"], discovered.map((a) =>
+        "<tr><td>" + a.displayName + "</td><td>" + a.safetyClass + "</td><td>" + a.selectable + "</td></tr>")) +
+      "<h3>Create draft</h3>" +
+      "<p><input id=\"gname\" placeholder=\"Group name\" value=\"Primary\"></p>" +
+      "<p>Leader <select id=\"gleader\">" + accountOpts + "</select></p>" +
+      "<p>Followers</p>" + followerBoxes +
+      "<p><button id=\"gcreate\">Save draft</button></p>" +
+      table(["Name", "Leader", "Followers", "Status", "Ver", "Actions"], rows) +
+      "<p class=\"sub\">Draft → validate → activate → enable. Live and Unknown cannot be selected. Copying starts disabled.</p>");
+    document.getElementById("gcreate").onclick = async () => {
+      const followers = Array.from(document.querySelectorAll("input[name=follower]:checked")).map((el) => el.value);
+      try {
+        await api("/api/v1/groups", { method: "POST", body: JSON.stringify({
+          name: document.getElementById("gname").value,
+          leaderKey: document.getElementById("gleader").value,
+          followerKeys: followers
+        })});
+        await pages.groups();
+      } catch (err) {
+        document.getElementById("gerr").textContent = String(err.message || err);
+      }
+    };
+    document.querySelectorAll("button[data-act]").forEach((btn) => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute("data-id");
+        const act = btn.getAttribute("data-act");
+        const path = "/api/v1/groups/" + id + "/" + act;
+        const body = act === "activate" ? { expectedVersion: Number(btn.getAttribute("data-ver")) } : {};
+        try {
+          await api(path, { method: "POST", body: JSON.stringify(body) });
+          await pages.groups();
+        } catch (err) {
+          document.getElementById("gerr").textContent = String(err.message || err);
+        }
+      };
+    });
   },
   async live() {
     const trades = await api("/api/v1/live/trades");

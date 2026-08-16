@@ -6,7 +6,9 @@ test('dashboard loads synthetic demo and requires CSRF for flatten', async ({ pa
   await expect(page.locator('body')).toContainText('disabled');
   await expect(page.locator('body')).toContainText('Disconnected');
   await expect(page.locator('body')).not.toContainText('live-certified');
-  await expect(page.locator('body')).toContainText('SIM-');
+  await expect(page.locator('body')).toContainText('Copying starts disabled');
+  await expect(page.locator('body')).not.toContainText('SIM-LEADER-01');
+  await expect(page.locator('body')).not.toContainText('SIM-FOLLOWER-03');
 
   const noCsrf = await request.post('/api/v1/flatten/prepare', { data: {} });
   expect(noCsrf.status()).toBe(403);

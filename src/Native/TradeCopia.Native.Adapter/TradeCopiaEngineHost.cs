@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TradeCopia.Domain;
 using TradeCopia.Protocol;
 
@@ -36,6 +37,11 @@ namespace TradeCopia.Native
         public string PipeName => _runtime.PipeName;
         public Adapter.EngineRuntime Runtime => _runtime;
         public bool PipeStarted => _runtime.PipeStarted;
+
+        public void PublishAccounts(IEnumerable<EngineAccountRecord> accounts)
+        {
+            _runtime.PublishAccounts(accounts);
+        }
 
         public void Start()
         {

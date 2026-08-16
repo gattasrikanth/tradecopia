@@ -9,7 +9,7 @@ public sealed class ControlPlaneOptions
 
     public string BindAddress { get; init; } = DefaultBindAddress;
     public int Port { get; init; } = DefaultPort;
-    public bool DemoMode { get; init; } = true;
+    public bool DemoMode { get; init; } = false;
     public string DataDirectory { get; init; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "TradeCopia",
@@ -19,13 +19,13 @@ public sealed class ControlPlaneOptions
 
     public static ControlPlaneOptions FromArgs(string[] args)
     {
-        var demo = true;
+        var demo = false;
         var port = DefaultPort;
         foreach (var arg in args)
         {
-            if (string.Equals(arg, "--no-demo", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(arg, "--demo", StringComparison.OrdinalIgnoreCase))
             {
-                demo = false;
+                demo = true;
             }
 
             if (arg.StartsWith("--port=", StringComparison.OrdinalIgnoreCase)

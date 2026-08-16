@@ -104,6 +104,7 @@ namespace TradeCopia.Protocol
         public const string PauseNewEntries = "PauseNewEntries";
         public const string ResumeNewEntries = "ResumeNewEntries";
         public const string DisableGroup = "DisableGroup";
+        public const string EnableCopying = "EnableCopying";
         public const string PrepareFlatten = "PrepareFlatten";
         public const string ExecuteFlatten = "ExecuteFlatten";
         public const string Heartbeat = "Heartbeat";

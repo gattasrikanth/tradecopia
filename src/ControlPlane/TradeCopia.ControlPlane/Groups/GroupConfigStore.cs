@@ -1,0 +1,197 @@
+using System.Text.Json;
+using TradeCopia.Domain.Safety;
+using TradeCopia.Protocol;
+
+namespace TradeCopia.ControlPlane.Groups;
+
+public sealed class GroupRecord
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = "";
+    public string LeaderKey { get; set; } = "";
+    public List<string> FollowerKeys { get; set; } = new();
+    public string Sizing { get; set; } = "OneToOne";
+    public string Status { get; set; } = "draft";
+    public int Version { get; set; } = 1;
+}
+
+public sealed class GroupConfigStore
+{
+    private readonly string _path;
+    private readonly object _gate = new();
+    private List<GroupRecord> _groups = new();
+
+    public GroupConfigStore(string dataDirectory)
+    {
+        Directory.CreateDirectory(dataDirectory);
+        _path = Path.Combine(dataDirectory, "groups.json");
+        Load();
+    }
+
+    public IReadOnlyList<GroupRecord> List()
+    {
+        lock (_gate)
+        {
+            return _groups.Select(Clone).ToList();
+        }
+    }
+
+    public GroupRecord CreateDraft(string name, string leaderKey, IEnumerable<string> followers)
+    {
+        var record = new GroupRecord
+        {
+            Name = string.IsNullOrWhiteSpace(name) ? "Copy group" : name.Trim(),
+            LeaderKey = leaderKey ?? "",
+            FollowerKeys = followers?.Where(f => !string.IsNullOrWhiteSpace(f)).Distinct(StringComparer.Ordinal).ToList() ?? new List<string>(),
+            Status = "draft",
+            Version = 1
+        };
+        lock (_gate)
+        {
+            _groups.Add(record);
+            Persist();
+            return Clone(record);
+        }
+    }
+
+    public GroupRecord? Get(string id)
+    {
+        lock (_gate)
+        {
+            var found = _groups.FirstOrDefault(g => g.Id == id);
+            return found == null ? null : Clone(found);
+        }
+    }
+
+    public (bool Ok, string Reason, GroupRecord? Group) Validate(string id, IReadOnlyList<EngineAccountRecord> accounts)
+    {
+        lock (_gate)
+        {
+            var group = _groups.FirstOrDefault(g => g.Id == id);
+            if (group == null)
+            {
+                return (false, "not-found", null);
+            }
+
+            var reason = ValidateCore(group, accounts);
+            if (reason != null)
+            {
+                group.Status = "draft";
+                Persist();
+                return (false, reason, Clone(group));
+            }
+
+            group.Status = "validated";
+            group.Version++;
+            Persist();
+            return (true, "validated", Clone(group));
+        }
+    }
+
+    public (bool Ok, string Reason, GroupRecord? Group) Activate(string id, int expectedVersion, IReadOnlyList<EngineAccountRecord> accounts)
+    {
+        lock (_gate)
+        {
+            var group = _groups.FirstOrDefault(g => g.Id == id);
+            if (group == null)
+            {
+                return (false, "not-found", null);
+            }
+
+            if (group.Version != expectedVersion)
+            {
+                return (false, "stale-activate", Clone(group));
+            }
+
+            var reason = ValidateCore(group, accounts);
+            if (reason != null)
+            {
+                return (false, reason, Clone(group));
+            }
+
+            foreach (var other in _groups)
+            {
+                if (other.Status == "active")
+                {
+                    other.Status = "draft";
+                }
+            }
+
+            group.Status = "active";
+            group.Version++;
+            Persist();
+            return (true, "activated", Clone(group));
+        }
+    }
+
+    public static string? ValidateCore(GroupRecord group, IReadOnlyList<EngineAccountRecord> accounts)
+    {
+        if (string.IsNullOrWhiteSpace(group.LeaderKey))
+        {
+            return "leader-required";
+        }
+
+        if (group.FollowerKeys.Count == 0)
+        {
+            return "follower-required";
+        }
+
+        if (group.FollowerKeys.Contains(group.LeaderKey, StringComparer.Ordinal))
+        {
+            return "leader-cannot-follow";
+        }
+
+        var byKey = accounts.ToDictionary(a => a.StableKey, StringComparer.Ordinal);
+        if (!byKey.TryGetValue(group.LeaderKey, out var leader))
+        {
+            return "leader-not-discovered";
+        }
+
+        if (!AccountSafetyClassifier.AlphaMaySelect(leader.SafetyClass))
+        {
+            return "leader-not-selectable:" + leader.SafetyClass;
+        }
+
+        foreach (var followerKey in group.FollowerKeys)
+        {
+            if (!byKey.TryGetValue(followerKey, out var follower))
+            {
+                return "follower-not-discovered";
+            }
+
+            if (!AccountSafetyClassifier.AlphaMaySelect(follower.SafetyClass))
+            {
+                return "follower-not-selectable:" + follower.SafetyClass;
+            }
+        }
+
+        return null;
+    }
+
+    private void Load()
+    {
+        if (!File.Exists(_path))
+        {
+            return;
+        }
+
+        var json = File.ReadAllText(_path);
+        _groups = JsonSerializer.Deserialize<List<GroupRecord>>(json) ?? new List<GroupRecord>();
+    }
+
+    private void Persist()
+    {
+        File.WriteAllText(_path, JsonSerializer.Serialize(_groups));
+    }
+
+    private static GroupRecord Clone(GroupRecord g) => new()
+    {
+        Id = g.Id,
+        Name = g.Name,
+        LeaderKey = g.LeaderKey,
+        FollowerKeys = g.FollowerKeys.ToList(),
+        Sizing = g.Sizing,
+        Status = g.Status,
+        Version = g.Version
+    };
+}

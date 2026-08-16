@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TradeCopia.Domain;
 using TradeCopia.Protocol;
 
@@ -51,6 +52,11 @@ namespace TradeCopia.Native.Adapter
         public INativeOrderExecutor Executor => _executor;
         public GuardedNativeRuntime Guarded => _guarded;
         public bool PipeStarted => _pipe != null;
+
+        public void PublishAccounts(IEnumerable<EngineAccountRecord> accounts)
+        {
+            Session.ReplaceAccounts(accounts);
+        }
 
         public void Start()
         {

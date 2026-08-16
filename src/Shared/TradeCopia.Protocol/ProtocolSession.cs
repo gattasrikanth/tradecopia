@@ -29,6 +29,7 @@ namespace TradeCopia.Protocol
             ProtocolMessageTypes.PauseNewEntries,
             ProtocolMessageTypes.ResumeNewEntries,
             ProtocolMessageTypes.DisableGroup,
+            ProtocolMessageTypes.EnableCopying,
             ProtocolMessageTypes.PrepareFlatten,
             ProtocolMessageTypes.ExecuteFlatten,
             ProtocolMessageTypes.Heartbeat
@@ -107,6 +108,9 @@ namespace TradeCopia.Protocol
         private bool _connected = true;
         private string _engineState = "Disabled";
         private bool _copyingEnabled;
+        private readonly List<EngineAccountRecord> _accounts = new List<EngineAccountRecord>();
+        private readonly HashSet<string> _activeAccountKeys = new HashSet<string>(StringComparer.Ordinal);
+        private string _activeConfigVersion = string.Empty;
 
         public ProtocolSession()
         {
@@ -118,6 +122,25 @@ namespace TradeCopia.Protocol
         public string SessionId => _sessionId;
         public string EngineState => _engineState;
         public bool CopyingEnabled => _copyingEnabled;
+        public IReadOnlyList<EngineAccountRecord> Accounts => _accounts;
+        public string ActiveConfigVersion => _activeConfigVersion;
+
+        public void ReplaceAccounts(IEnumerable<EngineAccountRecord> accounts)
+        {
+            _accounts.Clear();
+            if (accounts == null)
+            {
+                return;
+            }
+
+            foreach (var account in accounts)
+            {
+                if (account != null && !string.IsNullOrEmpty(account.StableKey))
+                {
+                    _accounts.Add(account);
+                }
+            }
+        }
 
         public void Disconnect()
         {
@@ -134,8 +157,23 @@ namespace TradeCopia.Protocol
 
         public string SnapshotJson()
         {
+            var accounts = new System.Text.StringBuilder();
+            accounts.Append('[');
+            for (var i = 0; i < _accounts.Count; i++)
+            {
+                if (i > 0)
+                {
+                    accounts.Append(',');
+                }
+
+                accounts.Append(_accounts[i].ToJson());
+            }
+
+            accounts.Append(']');
             return "{\"engineState\":\"" + _engineState
-                + "\",\"copyingEnabled\":" + (_copyingEnabled ? "true" : "false") + "}";
+                + "\",\"copyingEnabled\":" + (_copyingEnabled ? "true" : "false")
+                + ",\"activeConfigVersion\":\"" + _activeConfigVersion
+                + "\",\"accounts\":" + accounts + "}";
         }
 
         public ProtocolValidationResult Handle(ProtocolEnvelope incoming)
@@ -202,6 +240,46 @@ namespace TradeCopia.Protocol
                 return SnapshotReply("resumed");
             }
 
+            if (string.Equals(incoming.MessageType, ProtocolMessageTypes.EnableCopying, StringComparison.Ordinal))
+            {
+                var enableBlock = RejectEnableReason();
+                if (enableBlock != null)
+                {
+                    return Reject(incoming, enableBlock);
+                }
+
+                _engineState = "Enabled";
+                _copyingEnabled = true;
+                return SnapshotReply("enabled");
+            }
+
+            if (string.Equals(incoming.MessageType, ProtocolMessageTypes.ActivateConfig, StringComparison.Ordinal))
+            {
+                _activeAccountKeys.Clear();
+                foreach (var key in ExtractActiveKeys(incoming.PayloadJson))
+                {
+                    _activeAccountKeys.Add(key);
+                }
+
+                if (_activeAccountKeys.Count < 2)
+                {
+                    _activeAccountKeys.Clear();
+                    return Reject(incoming, "leader-and-follower-required");
+                }
+
+                var activateBlock = RejectEnableReason();
+                if (activateBlock != null)
+                {
+                    _activeAccountKeys.Clear();
+                    return Reject(incoming, activateBlock);
+                }
+
+                _activeConfigVersion = Guid.NewGuid().ToString("N");
+                _engineState = "Disabled";
+                _copyingEnabled = false;
+                return SnapshotReply("activated");
+            }
+
             return new ProtocolValidationResult(
                 true,
                 "accepted",
@@ -212,6 +290,92 @@ namespace TradeCopia.Protocol
                     DateTime.UtcNow,
                     _sessionId,
                     SnapshotJson()));
+        }
+
+        private string? RejectEnableReason()
+        {
+            if (_activeAccountKeys.Count == 0)
+            {
+                return "no-active-group";
+            }
+
+            foreach (var key in _activeAccountKeys)
+            {
+                EngineAccountRecord? found = null;
+                for (var i = 0; i < _accounts.Count; i++)
+                {
+                    if (string.Equals(_accounts[i].StableKey, key, StringComparison.Ordinal))
+                    {
+                        found = _accounts[i];
+                        break;
+                    }
+                }
+
+                if (found == null)
+                {
+                    return "unknown-account";
+                }
+
+                if (!TradeCopia.Domain.Safety.AccountSafetyClassifier.AlphaMayEnable(found.SafetyClass))
+                {
+                    return "non-live-required:" + found.SafetyClass;
+                }
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> ExtractActiveKeys(string payload)
+        {
+            if (string.IsNullOrEmpty(payload))
+            {
+                yield break;
+            }
+
+            var leader = ReadQuoted(payload, "leader");
+            if (!string.IsNullOrEmpty(leader) && !leader.StartsWith("[", StringComparison.Ordinal))
+            {
+                yield return leader;
+            }
+
+            var followers = ReadQuoted(payload, "followers");
+            if (followers.StartsWith("[", StringComparison.Ordinal))
+            {
+                var inner = followers.Trim('[', ']');
+                foreach (var part in inner.Split(','))
+                {
+                    var key = part.Trim().Trim('"');
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        yield return key;
+                    }
+                }
+            }
+        }
+
+        private static string ReadQuoted(string json, string name)
+        {
+            var key = "\"" + name + "\":";
+            var i = json.IndexOf(key, StringComparison.Ordinal);
+            if (i < 0)
+            {
+                return string.Empty;
+            }
+
+            i += key.Length;
+            if (i < json.Length && json[i] == '"')
+            {
+                var end = json.IndexOf('"', i + 1);
+                return end < 0 ? string.Empty : json.Substring(i + 1, end - i - 1);
+            }
+
+            if (i < json.Length && json[i] == '[')
+            {
+                var end = json.IndexOf(']', i);
+                return end < 0 ? string.Empty : json.Substring(i, end - i + 1);
+            }
+
+            return string.Empty;
         }
 
         private ProtocolValidationResult SnapshotReply(string reason)

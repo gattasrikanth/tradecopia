@@ -23,6 +23,7 @@ namespace NinjaTrader.NinjaScript.AddOns
                 Name = TradeCopia.Native.TradeCopiaEngineHost.ProductName;
                 Description = "Local-first TradeCopia engine host. Copying starts disabled.";
                 _host.Start();
+                PublishAccounts();
                 Account.AccountStatusUpdate += OnAccountStatusUpdate;
                 _host.Subscriptions.Register("static:AccountStatusUpdate");
             }
@@ -33,12 +34,19 @@ namespace NinjaTrader.NinjaScript.AddOns
             }
         }
 
-        private static void OnAccountStatusUpdate(object sender, AccountStatusEventArgs args)
+        private void OnAccountStatusUpdate(object sender, AccountStatusEventArgs args)
         {
             if (sender == null || args == null)
             {
                 return;
             }
+
+            PublishAccounts();
+        }
+
+        private void PublishAccounts()
+        {
+            _host.PublishAccounts(TradeCopia.Native.NinjaTraderAccountCatalog.Capture());
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using TradeCopia.ControlPlane;
 using TradeCopia.ControlPlane.Commands;
 using TradeCopia.ControlPlane.Demo;
+using TradeCopia.ControlPlane.Groups;
 using TradeCopia.ControlPlane.Security;
 using TradeCopia.Persistence;
 using TradeCopia.Protocol;
@@ -53,6 +54,7 @@ builder.Services.AddSingleton<DemoCatalog>();
 builder.Services.AddSingleton<ConfirmationStore>();
 builder.Services.AddSingleton<EngineLink>();
 builder.Services.AddSingleton(_ => new LocalDatabase(options.DataDirectory, "control.db"));
+builder.Services.AddSingleton(_ => new GroupConfigStore(options.DataDirectory));
 
 var app = builder.Build();
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
@@ -63,7 +65,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 var api = app.MapGroup("/api/v1");
-api.MapGet("/system/status", (ControlPlaneOptions opt, DemoCatalog demo, EngineLink engine) =>
+api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine) =>
     Results.Json(new
     {
         opt.Port,
@@ -72,7 +74,20 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, DemoCatalog demo, EngineL
         engineConnected = engine.IsConnected,
         engineState = engine.EngineState,
         copyingEnabled = engine.CopyingEnabled,
-        details = demo.SystemStatus()
+        details = new
+        {
+            product = "TradeCopia",
+            status = "Development",
+            releaseLabel = "Alpha — SIM only recommended",
+            engineState = engine.EngineState,
+            engineConnected = engine.IsConnected,
+            ninjaTraderDetected = System.Diagnostics.Process.GetProcessesByName("NinjaTrader").Length > 0,
+            demoMode = opt.DemoMode,
+            copyingEnabled = engine.CopyingEnabled,
+            bindAddress = opt.BindAddress,
+            privacy = "local-only",
+            telemetry = "none"
+        }
     }));
 api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha", commit = "local" }));
 api.MapGet("/system/health", () => Results.Json(new { status = "ok", copying = "disabled" }));
@@ -86,11 +101,92 @@ api.MapGet("/system/capabilities", () => Results.Json(new
 api.MapGet("/system/privacy", (DemoCatalog demo) => Results.Json(demo.Privacy()));
 api.MapGet("/system/bootstrap", (SessionService session) => Results.Json(new { csrfToken = session.CsrfToken }));
 
-api.MapGet("/accounts", (DemoCatalog demo) => Results.Json(demo.Accounts()));
-api.MapGet("/groups", (DemoCatalog demo) => Results.Json(demo.Groups()));
-api.MapGet("/live/trades", (DemoCatalog demo) => Results.Json(demo.LiveTrades()));
-api.MapGet("/live/orders", (DemoCatalog demo) => Results.Json(demo.LiveTrades()));
-api.MapGet("/live/divergences", (DemoCatalog demo) => Results.Json(demo.Divergences()));
+api.MapGet("/accounts", (EngineLink engine) =>
+{
+    if (!engine.IsConnected)
+    {
+        return Results.Json(new
+        {
+            source = "disconnected",
+            accounts = Array.Empty<object>(),
+            error = "engine-disconnected"
+        });
+    }
+
+    return Results.Json(new { source = "engine", accounts = engine.Accounts });
+});
+api.MapGet("/groups", (GroupConfigStore store) => Results.Json(store.List()));
+api.MapPost("/groups", async (HttpContext http, GroupConfigStore store) =>
+{
+    var body = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(http.Request.Body) ?? new();
+    var name = body.TryGetValue("name", out var n) ? n.GetString() ?? "" : "";
+    var leader = body.TryGetValue("leaderKey", out var l) ? l.GetString() ?? "" : "";
+    var followers = new List<string>();
+    if (body.TryGetValue("followerKeys", out var f) && f.ValueKind == JsonValueKind.Array)
+    {
+        foreach (var item in f.EnumerateArray())
+        {
+            var v = item.GetString();
+            if (!string.IsNullOrWhiteSpace(v))
+            {
+                followers.Add(v);
+            }
+        }
+    }
+
+    var created = store.CreateDraft(name, leader, followers);
+    return Results.Json(created);
+});
+api.MapPost("/groups/{groupId}/validate", (string groupId, GroupConfigStore store, EngineLink engine) =>
+{
+    if (!engine.IsConnected)
+    {
+        return Results.Json(new { ok = false, error = "engine-disconnected" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    var result = store.Validate(groupId, engine.Accounts);
+    return result.Ok
+        ? Results.Json(new { ok = true, group = result.Group })
+        : Results.Json(new { ok = false, error = result.Reason, group = result.Group }, statusCode: StatusCodes.Status400BadRequest);
+});
+api.MapPost("/groups/{groupId}/activate", async (string groupId, HttpContext http, GroupConfigStore store, EngineLink engine) =>
+{
+    if (!engine.IsConnected)
+    {
+        return Results.Json(new { ok = false, error = "engine-disconnected" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    var body = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(http.Request.Body) ?? new();
+    var expected = body.TryGetValue("expectedVersion", out var ev) && ev.TryGetInt32(out var v) ? v : -1;
+    var result = store.Activate(groupId, expected, engine.Accounts);
+    if (!result.Ok || result.Group == null)
+    {
+        return Results.Json(new { ok = false, error = result.Reason, group = result.Group }, statusCode: StatusCodes.Status409Conflict);
+    }
+
+    var payload = "{\"leader\":\"" + result.Group.LeaderKey + "\",\"followers\":[" +
+        string.Join(",", result.Group.FollowerKeys.Select(k => "\"" + k + "\"")) + "]}";
+    var pipe = engine.Send(ProtocolMessageTypes.ActivateConfig, payload);
+    if (!pipe.Accepted)
+    {
+        return Results.Json(new { ok = false, error = pipe.Reason }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    return Results.Json(new { ok = true, group = result.Group });
+});
+api.MapPost("/groups/{groupId}/enable", (string groupId, GroupConfigStore store, EngineLink engine) =>
+{
+    var group = store.Get(groupId);
+    if (group == null || group.Status != "active")
+    {
+        return Results.Json(new { ok = false, error = "not-active" }, statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    return FailClosedCommand(engine, ProtocolMessageTypes.EnableCopying, groupId);
+});
+api.MapGet("/live/trades", (EngineLink engine) => Results.Json(Array.Empty<object>()));
+api.MapGet("/live/orders", (EngineLink engine) => Results.Json(Array.Empty<object>()));
+api.MapGet("/live/divergences", (EngineLink engine) => Results.Json(Array.Empty<object>()));
 api.MapGet("/live/health", (EngineLink engine) => Results.Json(new
 {
     groupHealth = "UNKNOWN",
@@ -128,9 +224,9 @@ api.MapPost("/flatten/prepare", (ConfirmationStore confirmations) =>
 {
     var preview = new
     {
-        accounts = new[] { "SIM-FOLLOWER-01", "SIM-FOLLOWER-02" },
-        instruments = new[] { "NQ 06-26", "MNQ 06-26" },
-        warning = "This would flatten follower exposure only. Engine is disconnected; execute will not place orders."
+        accounts = Array.Empty<string>(),
+        instruments = Array.Empty<string>(),
+        warning = "Flatten applies to follower exposure only after an active group exists."
     };
     var record = confirmations.Prepare("flatten", preview, "flatten-followers-v1");
     return Results.Json(new { confirmationId = record.Id, expiresAt = record.ExpiresAt, preview });
@@ -158,10 +254,10 @@ api.MapPost("/reconcile/execute", () => Results.Json(new { accepted = false, sub
 api.MapMethods("/orders", new[] { "GET", "POST", "PUT", "PATCH", "DELETE" }, () =>
     Results.Json(new { error = "no-generic-order-entry" }, statusCode: StatusCodes.Status404NotFound));
 
-api.MapGet("/events/stream", async (HttpContext http, DemoCatalog demo, CancellationToken token) =>
+api.MapGet("/events/stream", async (HttpContext http, CancellationToken token) =>
 {
     http.Response.Headers.ContentType = "text/event-stream";
-    var payload = JsonSerializer.Serialize(new { type = "snapshot", trades = demo.LiveTrades() });
+    var payload = JsonSerializer.Serialize(new { type = "snapshot", trades = Array.Empty<object>() });
     await http.Response.WriteAsync("event: snapshot\ndata: " + payload + "\n\n", token);
     await http.Response.Body.FlushAsync(token);
 });

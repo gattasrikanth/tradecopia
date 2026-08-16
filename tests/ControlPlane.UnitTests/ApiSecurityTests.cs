@@ -47,8 +47,10 @@ public class ApiSecurityTests : IClassFixture<ApiFactory>
         var response = await client.GetAsync("/api/v1/system/status");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var json = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Disabled", json);
+        Assert.Contains("\"engineConnected\":false", json);
+        Assert.Contains("\"copyingEnabled\":false", json);
         Assert.Contains("demoMode", json);
+        Assert.DoesNotContain("SIM-LEADER-01", json);
     }
 
     [Fact]

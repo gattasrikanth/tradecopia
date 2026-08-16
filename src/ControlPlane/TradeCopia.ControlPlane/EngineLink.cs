@@ -12,6 +12,7 @@ public sealed class EngineLink : IDisposable
     private NamedPipeCompanionClient? _client;
     private string _engineState = "Unknown";
     private bool _copyingEnabled;
+    private IReadOnlyList<EngineAccountRecord> _accounts = Array.Empty<EngineAccountRecord>();
 
     public string EngineState
     {
@@ -21,6 +22,11 @@ public sealed class EngineLink : IDisposable
     public bool CopyingEnabled
     {
         get { lock (_gate) { return _copyingEnabled; } }
+    }
+
+    public IReadOnlyList<EngineAccountRecord> Accounts
+    {
+        get { lock (_gate) { return _accounts; } }
     }
 
     public bool IsConnected
@@ -44,6 +50,7 @@ public sealed class EngineLink : IDisposable
             {
                 client.Dispose();
                 _client = null;
+                _accounts = Array.Empty<EngineAccountRecord>();
                 return false;
             }
 
@@ -80,7 +87,7 @@ public sealed class EngineLink : IDisposable
         }
     }
 
-    public ProtocolValidationResult Send(string messageType)
+    public ProtocolValidationResult Send(string messageType, string payloadJson = "{}")
     {
         lock (_gate)
         {
@@ -95,7 +102,7 @@ public sealed class EngineLink : IDisposable
                         messageType,
                         DateTime.UtcNow,
                         string.Empty,
-                        "{}"));
+                        payloadJson ?? "{}"));
             }
 
             var envelope = new ProtocolEnvelope(
@@ -104,7 +111,7 @@ public sealed class EngineLink : IDisposable
                 messageType,
                 DateTime.UtcNow,
                 string.Empty,
-                "{}");
+                payloadJson ?? "{}");
             var result = _client.Send(envelope);
             if (result.Accepted)
             {
@@ -158,6 +165,11 @@ public sealed class EngineLink : IDisposable
         else if (payload.Contains("\"copyingEnabled\":false", StringComparison.Ordinal))
         {
             _copyingEnabled = false;
+        }
+
+        if (payload.Contains("\"accounts\":", StringComparison.Ordinal))
+        {
+            _accounts = EngineAccountRecord.ParseArray(payload);
         }
     }
 
