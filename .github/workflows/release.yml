@@ -1,0 +1,21 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  notes:
+    name: placeholder-release-notes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse uncertified stable claims
+        run: |
+          echo "Release workflow is a skeleton until packaging exists."
+          echo "Any GitHub Release created from this repository must remain a prerelease"
+          echo "until manual NinjaTrader SIM certification has passed."

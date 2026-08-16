@@ -1,0 +1,37 @@
+name: codeql
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 7 * * 1'
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect analyzable source
+        id: detect
+        run: |
+          if find src tests -type f \( -name '*.cs' -o -name '*.ts' -o -name '*.tsx' -o -name '*.js' \) 2>/dev/null | grep -q .; then
+            echo "has_source=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_source=false" >> "$GITHUB_OUTPUT"
+            echo "No application source yet; CodeQL analysis is deferred."
+          fi
+      - uses: github/codeql-action/init@v3
+        if: steps.detect.outputs.has_source == 'true'
+        with:
+          languages: csharp,javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+        if: steps.detect.outputs.has_source == 'true'
+

@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a defect using synthetic or SIM data only
+title: "[bug] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do **not** include real account numbers, credentials, personal names, or brokerage identifiers.
+        Use synthetic names such as `SIM-LEADER-01`.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - execution-engine
+        - ninjatrader-adapter
+        - dashboard
+        - journal
+        - analytics
+        - security
+        - performance
+        - documentation
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction (SIM / synthetic only)
+      description: Steps, NinjaTrader version, and whether the account is SIM.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This report contains no live account data or secrets
+          required: true
+        - label: I can reproduce this on a simulation account or with fixtures
+          required: false

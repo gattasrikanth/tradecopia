@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: secret-and-layout-scan
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for secrets, account data, and prohibited binaries
+        shell: pwsh
+        run: ./scripts/scan-secrets.ps1
+
+  resume-script:
+    name: resume-script-syntax
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $errors = $false
+          Get-ChildItem -Path scripts -Filter *.ps1 | ForEach-Object {
+            $contents = Get-Content -LiteralPath $_.FullName -Raw
+            $null = [System.Management.Automation.Language.Parser]::ParseInput(
+              $contents, $_.FullName, [ref]$null, [ref]$parseErrors)
+            if ($parseErrors -and $parseErrors.Count -gt 0) {
+              Write-Host "PARSE FAIL $($_.Name)"
+              $parseErrors | ForEach-Object { Write-Host $_ }
+              $errors = $true
+            }
+            else {
+              Write-Host "PARSE OK $($_.Name)"
+            }
+          }
+          if ($errors) { exit 1 }
+
+  placeholder-build:
+    name: no-source-yet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm required docs exist
+        run: |
+          test -f docs/product/PRD.md
+          test -f docs/architecture/SYSTEM-DESIGN.md
+          test -f docs/agent/AUTONOMOUS-BUILD-MANDATE.md
+          test -f docs/agent/STATE.md
+          test -f LICENSE
+          test -f AGENTS.md

@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a product or engineering change
+title: "[feat] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TradeCopia is specified by `docs/product/PRD.md` and
+        `docs/architecture/SYSTEM-DESIGN.md`. Explain how the request fits
+        those documents or why an ADR is needed.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Suggested phase
+      options:
+        - Phase 2 domain
+        - Phase 3–5 native engine
+        - Phase 7–8 control plane
+        - Phase 9–11 dashboard / journal
+        - Docs / DX
+        - Unsure
+    validations:
+      required: true
