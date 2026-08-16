@@ -1,35 +1,34 @@
 # Agent State
 
-Last updated: 2026-08-16T18:40:00Z
+Last updated: 2026-08-16T20:30:00Z
 Current branch: main
-HEAD: 02a1d37b4caec56339a00cf6cd3365dda9095609
+HEAD: (set after push)
 Current phase: Phase 12
 Phase status: IN_PROGRESS
 
 ## Completed
 
-- Domain: coordinator restart-disable, latency sample, bounded telemetry, mapping, sizing, topology, SIM fail-closed.
-- IPC: ProtocolSession handshake, version fail-closed, ExecuteOrder rejected, reconnect requires handshake.
-- SIM submit: SimulationGuardedExecutor requires TriState.KnownTrue; DisabledOrderExecutor remains default.
-- Control plane + demo dashboard; Playwright critical flow green locally.
-- Coverage exception documented (domain ~87.7/75.8; NT wrappers out of public CI).
+- Domain coverage gate met (coverlet line>=95, branch>=90).
+- OS named-pipe engine host + companion client; handshake; ExecuteOrder rejected.
+- Pause/disable fail closed when engine disconnected (503 engine-disconnected).
+- SIM fail-closed executor; copying starts disabled.
 
 ## Current invariants / locked decisions
 
 - Copying starts disabled. No generic order-entry API.
 - Bind 127.0.0.1 only. CSRF required on POST.
-- Simulation identity is fail-closed (Unknown is not SIM).
+- Simulation identity fail-closed.
+- Pause/disable require a connected engine pipe.
 
 ## Tests last run
 
-- `dotnet test TradeCopia.slnx` — protocol 11, architecture 4, domain 78, control plane 8 (re-verify before final)
-- Playwright dashboard.spec.ts — passed
+- Domain.UnitTests 98 passed; coverlet ~95.5/91.4
+- Named-pipe + control-plane fail-closed tests passed locally
 
 ## Known blockers
 
 - NT user-data dir missing (install-local / manual SIM).
-- Public CI cannot compile NT-referenced AddOn (no proprietary DLLs).
-- Domain coverage below 95/90; documented in docs/development/coverage-exceptions.md.
+- Public CI cannot compile NT-referenced AddOn.
 
 ## Active subagents/worktrees
 
@@ -37,4 +36,4 @@ Phase status: IN_PROGRESS
 
 ## Next exact action
 
-- Final verification, implementation report, push, clean tree.
+- Commit/push this slice; run verification; pin HEAD in this file to the pushed tip.
