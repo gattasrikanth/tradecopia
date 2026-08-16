@@ -95,6 +95,11 @@ public class CustomerPresentationTests
 
         var ok = CustomerPresentation.Preflight(true, false, Sim(), new[] { Demo() }, "OneToOne", true, false);
         Assert.True(ok.Ready);
+        Assert.Contains(ok.Checks, c => c.Label == "Copying currently disabled" && c.Passed);
+        var enabled = CustomerPresentation.Preflight(true, true, Sim(), new[] { Demo() }, "OneToOne", true, false);
+        Assert.True(enabled.Ready);
+        Assert.Contains(enabled.Checks, c => c.Label == "Copying enabled" && c.Passed);
+        Assert.DoesNotContain(enabled.Checks, c => c.Label == "Copying currently disabled");
         Assert.Equal("Ready", CustomerPresentation.StatusHeadline(true, false, ok.Ready));
         Assert.Equal("Blocked", CustomerPresentation.StatusHeadline(true, false, false));
         Assert.Equal("Engine Disconnected", CustomerPresentation.StatusHeadline(false, false, false));

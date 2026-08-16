@@ -82,7 +82,7 @@ const pages = {
       "</div>" +
       "<h3>First-trade preflight</h3>" +
       "<div class=\"card\">" +
-      "<h2>" + (ready ? "Ready for non-live copying" : "Not ready") + "</h2>" +
+      "<h2>" + (status.copyingEnabled ? "Non-live copying is on" : (ready ? "Ready for non-live copying" : "Not ready")) + "</h2>" +
       "<ul class=\"checks\">" + pre.map((c) =>
         "<li class=\"" + (c.passed ? "pass" : "fail") + "\">" + (c.passed ? "✓ " : "✗ ") + escapeHtml(c.label) + "</li>"
       ).join("") + "</ul></div>");

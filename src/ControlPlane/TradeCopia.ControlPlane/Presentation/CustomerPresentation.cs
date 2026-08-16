@@ -235,7 +235,11 @@ public static class CustomerPresentation
             new() { Label = "1:1 sizing valid", Passed = string.Equals(SizingLabel(sizing), "1 : 1", StringComparison.Ordinal) },
             new() { Label = "Topology valid", Passed = topologyValid },
             new() { Label = "No blocking divergence", Passed = !blockingDivergence },
-            new() { Label = "Copying currently disabled", Passed = !copyingEnabled }
+            new()
+            {
+                Label = copyingEnabled ? "Copying enabled" : "Copying currently disabled",
+                Passed = true
+            }
         };
 
         var ready = checks.TrueForAll(c => !c.Blocking || c.Passed);
