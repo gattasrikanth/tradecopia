@@ -6,6 +6,7 @@ using TradeCopia.Domain.Fingerprints;
 using TradeCopia.Domain.Intents;
 using TradeCopia.Domain.Model;
 using TradeCopia.Domain.Origin;
+using TradeCopia.Domain.Mapping;
 using TradeCopia.Domain.Sizing;
 using TradeCopia.Domain.Time;
 
@@ -252,10 +253,10 @@ namespace TradeCopia.Domain.Engine
                     continue;
                 }
 
-                var mapped = MapInstrument(follower, evt.Instrument);
-                if (mapped == null)
+                var mapped = InstrumentMapper.Map(follower, evt.Instrument);
+                if (!mapped.Succeeded || !mapped.Instrument.HasValue)
                 {
-                    intents.Add(CreateDivergence(evt, group, logical, follower.Account, DivergenceClass.ConfigMismatch, "instrument-unmapped"));
+                    intents.Add(CreateDivergence(evt, group, logical, follower.Account, DivergenceClass.ConfigMismatch, mapped.Reason));
                     continue;
                 }
 
@@ -286,7 +287,7 @@ namespace TradeCopia.Domain.Engine
                     group.Id,
                     follower.Account,
                     logical.Id,
-                    mapped,
+                    mapped.Instrument,
                     evt.OrderType,
                     evt.Action,
                     sizing.Quantity,
@@ -296,8 +297,8 @@ namespace TradeCopia.Domain.Engine
                     "order-mirror-submit",
                     _clock.UtcNow);
 
-                _origins.RegisterPending(commandId, follower.Account, mapped.Value);
-                var link = new FollowerLink(follower.Account, sizing.Quantity, mapped.Value)
+                _origins.RegisterPending(commandId, follower.Account, mapped.Instrument.Value);
+                var link = new FollowerLink(follower.Account, sizing.Quantity, mapped.Instrument.Value)
                 {
                     SubmitCommand = commandId,
                     SubmittedQuantity = sizing.Quantity,
@@ -512,32 +513,6 @@ namespace TradeCopia.Domain.Engine
             }
 
             return null;
-        }
-
-        private static InstrumentKey? MapInstrument(FollowerRule follower, InstrumentKey source)
-        {
-            if (follower.InstrumentMappings == null || follower.InstrumentMappings.Length == 0)
-            {
-                return source;
-            }
-
-            foreach (var mapping in follower.InstrumentMappings)
-            {
-                if (source.Value.StartsWith(mapping.SourceRoot, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (mapping.ExpiryPolicy != ExpiryMappingPolicy.ExactMonthOnly)
-                    {
-                        return null;
-                    }
-
-                    var suffix = source.Value.Length > mapping.SourceRoot.Length
-                        ? source.Value.Substring(mapping.SourceRoot.Length)
-                        : string.Empty;
-                    return new InstrumentKey(mapping.TargetRoot + suffix);
-                }
-            }
-
-            return source;
         }
 
         private static bool IsEligibleSubmissionState(LeaderOrderState state)

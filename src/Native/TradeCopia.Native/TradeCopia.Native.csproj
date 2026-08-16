@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net481</TargetFramework>
     <RootNamespace>TradeCopia.Native</RootNamespace>
     <Description>NinjaTrader 8 AddOn entry point. References local NT assemblies only; never copy them to output.</Description>
     <NinjaTraderBin Condition="'$(NinjaTraderBin)' == ''">$(ProgramW6432)\NinjaTrader 8\bin</NinjaTraderBin>

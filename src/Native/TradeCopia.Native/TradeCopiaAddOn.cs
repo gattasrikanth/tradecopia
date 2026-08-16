@@ -1,14 +1,49 @@
 using System;
+using System.Diagnostics;
+using NinjaTrader.Cbi;
+using NinjaTrader.NinjaScript;
 using TradeCopia.Domain;
 using TradeCopia.Native.Adapter;
 
-namespace TradeCopia.Native
+namespace NinjaTrader.NinjaScript.AddOns
 {
     /// <summary>
-    /// Native AddOn entry. Order submission is wired through
-    /// <see cref="DisabledOrderExecutor"/> until Phase 3 SIM work.
-    /// This type is compiled only when NinjaTrader reference assemblies are present.
+    /// Native AddOn entry. Copying starts disabled. This type never calls
+    /// Account.Submit/Change/Cancel/Flatten in the current Alpha.
     /// </summary>
+    public class TradeCopiaAddOn : AddOnBase
+    {
+        private readonly TradeCopia.Native.TradeCopiaEngineHost _host = new TradeCopia.Native.TradeCopiaEngineHost();
+
+        protected override void OnStateChange()
+        {
+            if (State == State.SetDefaults)
+            {
+                Name = TradeCopia.Native.TradeCopiaEngineHost.ProductName;
+                Description = "Local-first TradeCopia engine host. Copying starts disabled.";
+                _host.Start();
+                Account.AccountStatusUpdate += OnAccountStatusUpdate;
+                _host.Subscriptions.Register("static:AccountStatusUpdate");
+            }
+            else if (State == State.Terminated)
+            {
+                Account.AccountStatusUpdate -= OnAccountStatusUpdate;
+                _host.Stop();
+            }
+        }
+
+        private static void OnAccountStatusUpdate(object sender, AccountStatusEventArgs args)
+        {
+            if (sender == null || args == null)
+            {
+                return;
+            }
+        }
+    }
+}
+
+namespace TradeCopia.Native
+{
     public sealed class TradeCopiaEngineHost
     {
         public const string ProductName = "TradeCopia";
@@ -31,6 +66,15 @@ namespace TradeCopia.Native
         {
             _subscriptions.UnregisterAll();
             State = EngineSafetyState.Disabled;
+        }
+
+        public static void OpenDashboard(int port)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "http://127.0.0.1:" + port,
+                UseShellExecute = true
+            });
         }
     }
 }
