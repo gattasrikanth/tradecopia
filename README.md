@@ -45,12 +45,21 @@ See `docs/architecture/SYSTEM-DESIGN.md` for the locked design.
 
 | Area | Status |
 | --- | --- |
-| Repository / governance | Done (Phase 0) |
-| Shared domain / fake engine | In progress (Phase 2; tests green) |
-| Native NinjaTrader AddOn | Facade only; net48 compile pending |
-| Local control plane | Not started |
-| Browser dashboard | Not started |
+| Repository / governance | Done |
+| Shared domain / fake engine | In progress (tests green; coverage gate not yet met) |
+| Native NinjaTrader AddOn | Compiles locally against NT 8.1.8.2; **no order submit** |
+| Local control plane | Loopback API + security + demo data |
+| Browser dashboard | Local SPA at `http://127.0.0.1:17841` |
 | Manual NT SIM certification | Not started |
+
+## Run the local dashboard
+
+```powershell
+pwsh ./scripts/test.ps1
+pwsh ./scripts/run-control-plane.ps1
+```
+
+Then open `http://127.0.0.1:17841`. Copying starts **disabled**. There is no generic order-entry API.
 
 ## Privacy
 

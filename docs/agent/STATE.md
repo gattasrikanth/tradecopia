@@ -1,44 +1,39 @@
 # Agent State
 
-Last updated: 2026-08-16T04:20:00Z
+Last updated: 2026-08-16T12:30:00Z
 Current branch: main
-HEAD: d5dc41c
-Current phase: Phase 2
+HEAD: (update after push)
+Current phase: Phase 8
 Phase status: IN_PROGRESS
 
 ## Completed
 
-- Phase 0 repository/governance (public `gattasrikanth/tradecopia`, Apache-2.0).
-- Phase 1 ADRs 0001–0006 (name/license, events, TFM, IPC, packaging, control plane).
-- Official NT 8 API notes; Desktop 8.1.8.2 detected locally.
-- Shared domain: identifiers, config, sizing, topology, fingerprints, origin registry, copy coordinator.
-- Protocol length-prefixed framing.
-- Disabled native order executor + subscription registry (no submits).
-- FakeNinjaTrader broker harness.
-- Automated tests: 61 passing (domain 53, protocol 4, architecture 4).
-- Reconcile planner preview with stale hash/config/expiry protection (no auto-repair).
-- CI now restores/tests `TradeCopia.slnx`.
+- Phase 0–1 governance and ADRs.
+- Phase 2 domain engine (coordinator, sizing, topology, mapping, fingerprints, origin registry, reconcile planner). Coverage still below 95/90.
+- Native AddOn compiles locally (`net481`) against NinjaTrader 8.1.8.2. Inherits `AddOnBase`. **Does not submit orders.**
+- Control plane: loopback bind, host/origin/CSRF, demo API, dashboard SPA, SQLite store with patched native SQLite.
+- Docs: first-run, install, localhost security, SIM certification checklist.
 
 ## Current invariants / locked decisions
 
-- Product name TradeCopia; license Apache-2.0; namespaces `TradeCopia.*`.
-- Copying starts disabled. Browser is not in the hot path.
-- OrderUpdate = intent; ExecutionUpdate = fills; PositionUpdate = reconcile only.
-- V1 topology is a strict star/forest (no leader also a follower).
-- Risk caps block rather than clamp.
-- No generic order-entry API.
+- TradeCopia / Apache-2.0 / `TradeCopia.*`
+- Copying starts disabled
+- No generic browser order-entry API
+- Bind `127.0.0.1` only
+- Unknown is never healthy
 
 ## Tests last run
 
-- `dotnet test TradeCopia.slnx` — 59 passed, 0 failed
-- `pwsh ./scripts/scan-secrets.ps1` — OK (110 files)
-- `pwsh ./scripts/verify-ninjatrader.ps1` — NT 8.1.8.2 present; user-data dir missing
-- Domain coverage snapshot ~70% line / ~59% branch (below 95/90 gate; more tests required)
+- `dotnet test TradeCopia.slnx` — domain 61, protocol 4, architecture 4, control plane 8 (verify again before commit)
+- Native `dotnet build src/Native/TradeCopia.Native` — succeeded locally
+- `pwsh ./scripts/parse-scripts.ps1` — OK
 
 ## Known blockers
 
-- Native `net48` AddOn compile: targeting pack install attempted (4.8.1); reference assemblies path still not visible to this session. Public CI will not compile NT adapter (by design).
-- NT user-data directory missing until NinjaTrader is launched once.
+- NT user-data directory missing until the owner launches NinjaTrader once (`install-local` and SIM cert)
+- Named-pipe live connection and SIM submit executor not yet wired
+- Domain coverage gate not met
+- Playwright/screenshots not done
 
 ## Active subagents/worktrees
 
@@ -46,7 +41,8 @@ Phase status: IN_PROGRESS
 
 ## Next exact action
 
-- Raise domain coverage toward 95/90 with more state-machine/scenario tests.
-- Add remaining Phase 2 pieces: explicit transition matrix docs, instrument mapping tests, reconcile planner skeleton.
-- When net48 targeting pack is visible, compile `src/Native/TradeCopia.Native` against local NT refs without copying DLLs.
-- Do not start browser work until domain/protocol are stable.
+- Push this checkpoint.
+- Add named-pipe client/server framing integration.
+- Continue SIM executor behind DisabledOrderExecutor + positive SIM detection.
+- Raise domain coverage.
+- Do not label Stable.

@@ -8,15 +8,15 @@ A blocker does not stop independent work.
 
 Scope affected: local `dotnet build` of domain/control-plane until SDK is present; public CI is unaffected once GitHub runners have an SDK.
 
-Why blocked: bootstrap machine had .NET 8/10 **runtimes** but no SDK (`dotnet --list-sdks` empty).
+Why blocked: resolved. .NET 10 SDK 10.0.400 and .NET Framework 4.8.1 targeting pack are installed. Native compile succeeded.
 
-Evidence: `dotnet --info` reported "No SDKs were found" on 2026-08-16.
+Evidence: `dotnet --list-sdks` shows 10.0.400; native project builds to `net481`.
 
-Workaround attempted: `winget install --id Microsoft.DotNet.SDK.10` started during Phase 0.
+Workaround attempted: winget installed SDK 10 and Developer Pack 4.8.1.
 
-What can continue: documentation, repository governance, CI YAML, ADRs, source authoring.
+What can continue: everything except NT user-data install.
 
-What a human eventually must provide: nothing if the SDK install succeeds; otherwise install the .NET 10 SDK and Visual Studio Build Tools /.NET Framework 4.8 targeting pack.
+What a human eventually must provide: nothing for this blocker.
 
 ---
 

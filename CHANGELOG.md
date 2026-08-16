@@ -18,4 +18,7 @@ first numbered release exists.
 - Deterministic domain copy coordinator, sizing, topology validation, and origin registry.
 - Length-prefixed IPC framing types.
 - Disabled native order executor (no submission).
-- FakeNinjaTrader harness and 59 automated tests.
+- FakeNinjaTrader harness and expanding automated tests.
+- Native AddOn compiles against local NinjaTrader 8.1.8.2 (`net481`) with order submission disabled.
+- Loopback control plane, CSRF/host/origin defenses, demo dashboard SPA.
+- Local SQLite persistence using a patched native SQLite package.
