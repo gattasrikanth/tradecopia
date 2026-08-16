@@ -279,12 +279,14 @@ public static class CustomerPresentation
             return (null, Array.Empty<string>());
         }
 
-        var followers = choices
+        var demos = choices
             .Where(c => c.AvailableAsFollower
                 && c.StableKey != leader.StableKey
                 && c.SafetyLabel == "Demo / Paper")
-            .Select(c => c.StableKey)
             .ToList();
+        var personal = demos.Where(c =>
+            c.DisplayName.IndexOf("playback", StringComparison.OrdinalIgnoreCase) < 0).ToList();
+        var followers = (personal.Count > 0 ? personal : demos).Select(c => c.StableKey).ToList();
         return (leader.StableKey, followers);
     }
 

@@ -98,12 +98,14 @@ const pages = {
       status.copyingEnabled ? "ok" : "warn");
     setAlerts(p.alertHtml || "");
     const discovered = accounts.accounts || [];
-    if (!state.leaderKey && discovered.length) {
+    if (groups.length) {
+      state.leaderKey = groups[0].leaderKey || state.leaderKey;
+    } else if (!state.leaderKey && discovered.length) {
       state.leaderKey = preferredLeaderKey(discovered);
     }
     const form = accounts.error
       ? "<div class=\"empty\">" + escapeHtml(accounts.message || "NinjaTrader engine disconnected. Launch/connect NinjaTrader to discover accounts.") + "</div>"
-      : groupForm(discovered, status);
+      : groupForm(discovered, status, groups[0]);
     const cards = groups.map((g) => groupCard(g, status)).join("");
     render("Copy Groups",
       form +
@@ -161,7 +163,7 @@ function card(label, value, meta) {
     (meta ? "<div class=\"meta\">" + escapeHtml(meta) + "</div>" : "") + "</article>";
 }
 
-function groupForm(discovered, status) {
+function groupForm(discovered, status, existing) {
   const leaders = discovered.filter((a) => a.availableAsLeader);
   const leaderOpts = leaders.map((a) =>
     "<option value=\"" + escapeHtml(a.stableKey) + "\"" + (a.stableKey === state.leaderKey ? " selected" : "") + ">" +
@@ -169,7 +171,7 @@ function groupForm(discovered, status) {
   return "<div class=\"card\"><h2>Create Copy Group</h2>" +
     "<div class=\"field\"><label for=\"gname\">Group name</label><input id=\"gname\" value=\"Primary\"></div>" +
     "<div class=\"field\"><label for=\"gleader\">Leader</label><select id=\"gleader\">" + leaderOpts + "</select></div>" +
-    "<div class=\"field\"><label>Followers</label><div id=\"gfollowers\">" + followerChoices(discovered, state.leaderKey) + "</div></div>" +
+    "<div class=\"field\"><label>Followers</label><div id=\"gfollowers\">" + followerChoices(discovered, state.leaderKey, existing) + "</div></div>" +
     "<div class=\"field\"><label for=\"gsizing\">Sizing</label><select id=\"gsizing\">" +
     "<option value=\"OneToOne\" selected>1 : 1</option>" +
     "<option value=\"Multiplier\">Multiplier</option>" +
@@ -187,12 +189,15 @@ function preferredLeaderKey(discovered) {
 }
 
 function preferredFollowerKeys(discovered, leaderKey) {
-  return discovered.filter((a) => a.availableAsFollower && a.stableKey !== leaderKey && a.safetyLabel === "Demo / Paper")
-    .map((a) => a.stableKey);
+  var demos = discovered.filter((a) => a.availableAsFollower && a.stableKey !== leaderKey && a.safetyLabel === "Demo / Paper");
+  var personal = demos.filter((a) => String(a.displayName || "").toLowerCase().indexOf("playback") < 0);
+  return (personal.length ? personal : demos).map((a) => a.stableKey);
 }
 
-function followerChoices(discovered, leaderKey) {
-  var preferred = preferredFollowerKeys(discovered, leaderKey);
+function followerChoices(discovered, leaderKey, existing) {
+  var preferred = existing && existing.followerKeys && existing.followerKeys.length
+    ? existing.followerKeys
+    : preferredFollowerKeys(discovered, leaderKey);
   return discovered.map((a) => {
     var locked = !a.availableAsFollower || a.stableKey === leaderKey;
     var reason = a.stableKey === leaderKey ? "This account is the leader" : (a.lockReason || a.eligibilityLabel);

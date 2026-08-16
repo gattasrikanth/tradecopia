@@ -161,10 +161,12 @@ public class CustomerPresentationTests
     public void Preferred_pair_is_simulation_leader_and_demo_follower()
     {
         var backtest = new EngineAccountRecord("Simulator|0", "Backtest", "Simulator", "Simulation", false, AccountSafetyClass.Simulation);
-        var pair = CustomerPresentation.PreferredPair(new[] { backtest, Sim(), Demo(), Live() });
+        var playback = new EngineAccountRecord("Playback|1", "Playback101", "Playback", "Live", false, AccountSafetyClass.DemoPaper);
+        var pair = CustomerPresentation.PreferredPair(new[] { backtest, playback, Sim(), Demo(), Live() });
         Assert.Equal(Sim().StableKey, pair.LeaderKey);
         Assert.Equal(Demo().StableKey, pair.FollowerKeys.Single());
         Assert.DoesNotContain(backtest.StableKey, pair.FollowerKeys);
+        Assert.DoesNotContain(playback.StableKey, pair.FollowerKeys);
     }
 
     [Fact]
