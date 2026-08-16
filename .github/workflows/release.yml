@@ -33,7 +33,7 @@ jobs:
           echo "Any GitHub Release created from this repository must remain a prerelease"
           echo "until manual NinjaTrader SIM certification has passed."
       - name: Upload setup artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tradecopia-setup
           path: |
