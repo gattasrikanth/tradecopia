@@ -66,4 +66,14 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | I-J | Dogfood real TradeCopia-Setup-*.exe | DONE |
 | I-L | Docs + implementation report | DONE |
 
-See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14 and `docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md`.
+## Real NT accounts / dashboard (2026-08-16)
+
+| ID | Task | Status |
+| --- | --- | --- |
+| A-01 | Official-metadata classification + ADR-0010 | DONE |
+| A-02 | Engine account snapshot; no fixture fallback | DONE |
+| A-03 | Draft → validate → activate → persist → non-live enable | DONE |
+| A-04 | Tests for classification, no-fixture, stale activate, fail-closed enable | DONE |
+| A-05 | `v0.1.0-alpha.2` pre-release + install that exact EXE | IN_PROGRESS |
+
+See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14 and `docs/reports/2026-08-16-real-accounts-dashboard.md`.
