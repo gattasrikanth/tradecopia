@@ -19,6 +19,20 @@ namespace TradeCopia.Domain.UnitTests
             Assert.Equal(expected, AccountSafetyClassifier.Classify(provider, mode, isDemo));
         }
 
+        [Theory]
+        [InlineData("Provider31", "Live", false, "Simulation", AccountSafetyClass.DemoPaper)]
+        [InlineData("Provider31", "Live", false, "Live", AccountSafetyClass.Live)]
+        [InlineData("Provider31", "Live", false, "", AccountSafetyClass.Live)]
+        public void Official_broker_account_type_not_display_name(
+            string provider,
+            string mode,
+            bool isDemo,
+            string accountType,
+            AccountSafetyClass expected)
+        {
+            Assert.Equal(expected, AccountSafetyClassifier.Classify(provider, mode, isDemo, accountType));
+        }
+
         [Fact]
         public void Alpha_may_enable_only_simulation_and_demo()
         {

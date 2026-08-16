@@ -10,15 +10,18 @@ Alpha classifies NinjaTrader accounts using official `NinjaTrader.Cbi` metadata 
 - `Account.Provider`
 - `Connection.Options.Mode` (`Live` or `Simulation` on NT 8.1.8.2)
 - `Connection.Options.IsDemo`
+- broker-specific official `AccountType` when present (`TradovateOptions.AccountType`: `Simulation` or `Live`)
 
 Rules:
 
 | Evidence | Class |
 | --- | --- |
 | Mode = Simulation **or** Provider = Simulator | Simulation |
-| IsDemo = true **or** Provider = Playback | Demo/Paper |
-| Provider empty/Unknown **or** Mode missing | Unknown |
-| Mode = Live (and not Simulator/IsDemo/Playback) | Live |
+| IsDemo = true **or** Provider = Playback **or** official AccountType = Simulation/Demo/Paper | Demo/Paper |
+| Provider empty/Unknown **or** Mode missing (and no official AccountType) | Unknown |
+| Mode = Live (and not Simulator/IsDemo/Playback/official demo AccountType) | Live |
+
+Tradovate Personal Demo connections report `Mode=Live` and `IsDemo=false`. The official discriminator is `TradovateOptions.AccountType`. Display names are still not used.
 
 Display names (`Sim101`, `DEMO…`) are never the sole safety signal.
 

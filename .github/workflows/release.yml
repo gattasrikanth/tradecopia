@@ -25,7 +25,7 @@ jobs:
         shell: pwsh
         run: |
           pwsh ./scripts/package.ps1
-          if (-not (Test-Path artifacts/package/TradeCopia-Setup-0.1.0-alpha.3.exe.sha256)) {
+          if (-not (Test-Path artifacts/package/TradeCopia-Setup-0.1.0-alpha.4.exe.sha256)) {
             throw 'checksum missing'
           }
       - name: Refuse uncertified stable claims
@@ -51,8 +51,8 @@ jobs:
             Write-Host "Release already exists; not overwriting (may include native payload from an NT machine)."
           } else {
             gh release create $tag `
-              artifacts/package/TradeCopia-Setup-0.1.0-alpha.3.exe `
-              artifacts/package/TradeCopia-Setup-0.1.0-alpha.3.exe.sha256 `
+              artifacts/package/TradeCopia-Setup-0.1.0-alpha.4.exe `
+              artifacts/package/TradeCopia-Setup-0.1.0-alpha.4.exe.sha256 `
               artifacts/package/README.txt `
               --prerelease `
               --title "TradeCopia $tag (Alpha)" `

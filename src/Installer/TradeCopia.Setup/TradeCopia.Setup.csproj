@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>TradeCopia.Setup</RootNamespace>
-    <AssemblyName>TradeCopia-Setup-0.1.0-alpha.3</AssemblyName>
+    <AssemblyName>TradeCopia-Setup-0.1.0-alpha.4</AssemblyName>
     <Description>Customer TradeCopia setup. Per-user, loopback companion, no NT proprietary files.</Description>
   </PropertyGroup>
 

@@ -25,20 +25,28 @@ namespace TradeCopia.Native
                         var provider = account.Provider.ToString();
                         var mode = string.Empty;
                         var isDemo = false;
+                        var officialAccountType = string.Empty;
                         try
                         {
                             var connection = account.Connection;
                             if (connection != null && connection.Options != null)
                             {
-                                isDemo = connection.Options.IsDemo;
-                                mode = connection.Options.Mode.ToString();
+                                var options = connection.Options;
+                                isDemo = options.IsDemo;
+                                mode = options.Mode.ToString();
+                                var accountType = options.GetType().GetProperty("AccountType");
+                                if (accountType != null)
+                                {
+                                    var value = accountType.GetValue(options, null);
+                                    officialAccountType = value != null ? value.ToString() : string.Empty;
+                                }
                             }
                         }
                         catch (Exception)
                         {
                         }
 
-                        var safety = AccountSafetyClassifier.Classify(provider, mode, isDemo);
+                        var safety = AccountSafetyClassifier.Classify(provider, mode, isDemo, officialAccountType);
                         var key = provider + "|" + account.Id.ToString();
                         var display = account.DisplayName;
                         if (string.IsNullOrEmpty(display))

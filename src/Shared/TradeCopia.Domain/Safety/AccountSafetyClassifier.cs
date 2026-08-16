@@ -19,13 +19,22 @@ namespace TradeCopia.Domain.Safety
     {
         public static AccountSafetyClass Classify(string provider, string officialMode, bool isDemo)
         {
+            return Classify(provider, officialMode, isDemo, string.Empty);
+        }
+
+        public static AccountSafetyClass Classify(string provider, string officialMode, bool isDemo, string officialAccountType)
+        {
             if (string.Equals(officialMode, "Simulation", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(provider, "Simulator", StringComparison.OrdinalIgnoreCase))
             {
                 return AccountSafetyClass.Simulation;
             }
 
-            if (isDemo || string.Equals(provider, "Playback", StringComparison.OrdinalIgnoreCase))
+            if (isDemo
+                || string.Equals(provider, "Playback", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(officialAccountType, "Simulation", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(officialAccountType, "Demo", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(officialAccountType, "Paper", StringComparison.OrdinalIgnoreCase))
             {
                 return AccountSafetyClass.DemoPaper;
             }
