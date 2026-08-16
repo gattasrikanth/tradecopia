@@ -132,6 +132,10 @@ public sealed class EngineLink : IDisposable
                 {
                     TryAttach(pipeName, 250);
                 }
+                else
+                {
+                    Send(ProtocolMessageTypes.RequestSnapshot);
+                }
 
                 token.WaitHandle.WaitOne(1000);
             }

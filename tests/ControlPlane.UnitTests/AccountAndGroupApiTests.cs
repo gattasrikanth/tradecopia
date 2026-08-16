@@ -112,6 +112,53 @@ public class AccountAndGroupApiTests
         Assert.DoesNotContain("SIM-LEADER-01", body);
     }
 
+    [Fact]
+    public async Task Late_published_accounts_appear_without_fixture_fallback()
+    {
+        await using var factory = new ApiFactory();
+        var options = factory.Services.GetRequiredService<TradeCopia.ControlPlane.ControlPlaneOptions>();
+        using var runtime = new EngineRuntime(options.PipeName);
+        runtime.Start();
+        var client = factory.CreateClient();
+        var connected = false;
+        for (var i = 0; i < 40; i++)
+        {
+            var status = await client.GetStringAsync("/api/v1/system/status");
+            if (status.Contains("\"engineConnected\":true", StringComparison.Ordinal))
+            {
+                connected = true;
+                break;
+            }
+
+            await Task.Delay(50);
+        }
+
+        Assert.True(connected);
+        var empty = await client.GetStringAsync("/api/v1/accounts");
+        Assert.DoesNotContain("SIM-LEADER-01", empty);
+        runtime.PublishAccounts(new[]
+        {
+            new EngineAccountRecord("sim-1", "Sim", "Simulator", "Simulation", false, AccountSafetyClass.Simulation),
+            new EngineAccountRecord("demo-1", "Demo", "Provider31", "Live", true, AccountSafetyClass.DemoPaper)
+        });
+        string body = "";
+        for (var i = 0; i < 40; i++)
+        {
+            body = await client.GetStringAsync("/api/v1/accounts");
+            if (body.Contains("sim-1", StringComparison.Ordinal) && body.Contains("demo-1", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            await Task.Delay(50);
+        }
+
+        Assert.Contains("sim-1", body);
+        Assert.Contains("demo-1", body);
+        Assert.Contains("DemoPaper", body);
+        Assert.DoesNotContain("SIM-LEADER-01", body);
+    }
+
     private sealed class Bootstrap
     {
         public string CsrfToken { get; set; } = "";

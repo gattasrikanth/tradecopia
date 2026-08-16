@@ -15,36 +15,53 @@ namespace TradeCopia.Native
             {
                 foreach (Account account in Account.All)
                 {
-                    if (account == null)
-                    {
-                        continue;
-                    }
-
-                    var provider = account.Provider.ToString();
-                    var mode = string.Empty;
-                    var isDemo = false;
                     try
                     {
-                        var connection = account.Connection;
-                        if (connection != null && connection.Options != null)
+                        if (account == null)
                         {
-                            isDemo = connection.Options.IsDemo;
-                            mode = connection.Options.Mode.ToString();
+                            continue;
                         }
+
+                        var provider = account.Provider.ToString();
+                        var mode = string.Empty;
+                        var isDemo = false;
+                        try
+                        {
+                            var connection = account.Connection;
+                            if (connection != null && connection.Options != null)
+                            {
+                                isDemo = connection.Options.IsDemo;
+                                mode = connection.Options.Mode.ToString();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
+
+                        var safety = AccountSafetyClassifier.Classify(provider, mode, isDemo);
+                        var key = provider + "|" + account.Id.ToString();
+                        var display = account.DisplayName;
+                        if (string.IsNullOrEmpty(display))
+                        {
+                            display = account.Name;
+                        }
+
+                        if (string.IsNullOrEmpty(display))
+                        {
+                            display = key;
+                        }
+
+                        list.Add(new EngineAccountRecord(
+                            key,
+                            display,
+                            provider,
+                            mode,
+                            isDemo,
+                            safety));
                     }
                     catch (Exception)
                     {
                     }
-
-                    var safety = AccountSafetyClassifier.Classify(provider, mode, isDemo);
-                    var key = provider + "|" + account.Id.ToString();
-                    list.Add(new EngineAccountRecord(
-                        key,
-                        account.Name ?? account.DisplayName ?? key,
-                        provider,
-                        mode,
-                        isDemo,
-                        safety));
                 }
             }
 

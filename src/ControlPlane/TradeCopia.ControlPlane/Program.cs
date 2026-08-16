@@ -89,7 +89,7 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine) =>
             telemetry = "none"
         }
     }));
-api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.2", commit = "local" }));
+api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.3", commit = "local" }));
 api.MapGet("/system/health", () => Results.Json(new { status = "ok", copying = "disabled" }));
 api.MapGet("/system/capabilities", () => Results.Json(new
 {
@@ -113,7 +113,20 @@ api.MapGet("/accounts", (EngineLink engine) =>
         });
     }
 
-    return Results.Json(new { source = "engine", accounts = engine.Accounts });
+    return Results.Json(new
+    {
+        source = "engine",
+        accounts = engine.Accounts.Select(a => new
+        {
+            a.StableKey,
+            a.DisplayName,
+            a.Provider,
+            a.OfficialMode,
+            a.IsDemo,
+            safetyClass = a.SafetyClass.ToString(),
+            a.Selectable
+        })
+    });
 });
 api.MapGet("/groups", (GroupConfigStore store) => Results.Json(store.List()));
 api.MapPost("/groups", async (HttpContext http, GroupConfigStore store) =>
