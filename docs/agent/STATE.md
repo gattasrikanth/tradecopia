@@ -2,9 +2,9 @@
 
 Last updated: 2026-08-16
 Current branch: main
-HEAD: see `git rev-parse HEAD` after this commit (pipe-host wiring). Do not add a follow-up pin-only SHA commit.
-Current phase: Phase 12
-Phase status: COMPLETE_ALPHA (automated). Not Stable. Not live-certified.
+HEAD: see `git rev-parse HEAD` (do not add pin-only SHA commits)
+Current phase: Installer / OneDrive / SIM-certification plan
+Phase status: IN_PROGRESS. Not Stable. Not live-certified.
 
 ## Completed
 
@@ -12,9 +12,8 @@ Phase status: COMPLETE_ALPHA (automated). Not Stable. Not live-certified.
 - OS named-pipe engine host + companion client; handshake; ExecuteOrder rejected.
 - Pause/disable fail closed when engine disconnected (503 engine-disconnected).
 - Shipped `TradeCopiaEngineHost.Start()` / `EngineRuntime.Start()` host `NamedPipeEngineHost`.
-- Control plane `Program` calls `EngineLink.StartRetryAttach` and status/diagnostics expose live snapshot fields.
-- `ProtocolSession` applies pause/disable/resume to observable `engineState` / `copyingEnabled`.
-- SIM fail-closed executor; copying starts disabled.
+- Control plane retries attach; session snapshot mutates on pause/disable/resume.
+- SIM fail-closed executor wrapper exists; copying starts disabled.
 
 ## Current invariants / locked decisions
 
@@ -22,15 +21,17 @@ Phase status: COMPLETE_ALPHA (automated). Not Stable. Not live-certified.
 - Bind 127.0.0.1 only. CSRF required on POST.
 - Simulation identity fail-closed.
 - Pause/disable require a connected engine pipe and mutate the session snapshot.
+- Cloud-backed NinjaTrader user-data is unsupported for normal install.
 
 ## Tests last run
 
-Recorded in the Alpha report after the verification pass that includes this commit.
+Prior Alpha slice: 135 automated tests; Domain coverlet 95.52 / 91.41; `ci` green on `0c6b111`.
 
 ## Known blockers
 
-- NT user-data dir missing (install-local / manual SIM).
+- Windows Documents known folder currently resolves under OneDrive. Local `%USERPROFILE%\Documents` exists but does not contain NinjaTrader 8.
 - Public CI cannot compile NT-referenced AddOn.
+- Manual owner SIM trades remain owner-only.
 
 ## Active subagents/worktrees
 
@@ -38,5 +39,4 @@ Recorded in the Alpha report after the verification pass that includes this comm
 
 ## Next exact action
 
-- External only: owner launches NinjaTrader once, then `scripts/install-local.ps1` and manual SIM certification.
-- Independent source work for this Alpha slice is the pipe-host wiring in this commit. Do not label Stable.
+Execute `docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md`: path resolver, NT user-data backup/migration off OneDrive, customer installer, no-F5 AddOn deploy, SIM native executor, release artifact, dogfood setup EXE.

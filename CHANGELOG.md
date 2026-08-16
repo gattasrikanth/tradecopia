@@ -10,6 +10,7 @@ first numbered release exists.
 
 ### Added
 
+- OneDrive remediation, one-click installer, release, and owner SIM certification plan (`docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md`).
 - Shipped engine runtime hosts the OS named-pipe server; control plane retries attach and surfaces live `engineState` / `copyingEnabled`.
 - Protocol session applies pause / disable / resume to the observable snapshot (not a Heartbeat ACK stub).
 

@@ -16,3 +16,5 @@ Formal ADRs live in `docs/adr/`. This file is the resume-friendly index.
 | D-009 | Dashboard is React + TypeScript + Vite + pnpm | Locked | [ADR-0006](../adr/ADR-0006-control-plane-runtime.md) |
 | D-010 | Event semantics: OrderUpdate intent, ExecutionUpdate fills | Locked | [ADR-0002](../adr/ADR-0002-event-semantics.md) |
 | D-011 | Native packaging uses local NT HintPaths, Private=false | Locked | [ADR-0005](../adr/ADR-0005-native-packaging.md) |
+| D-012 | Cloud-backed NT user-data is unsupported for normal install | Locked | Plan: `docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md` |
+| D-013 | Customer distribution is a versioned `TradeCopia-Setup-*.exe` | Locked | ADR-0007 to follow with technology choice |

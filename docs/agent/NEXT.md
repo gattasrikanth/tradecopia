@@ -1,5 +1,6 @@
 # Next actions
 
-1. After the product owner launches NinjaTrader once: `scripts/install-local.ps1` and the manual SIM matrix.
-2. Keep `main` green. Shipped hosts now start and attach the named pipe; remaining work is NT user-data / SIM, not another isolated pipe prototype.
-3. Do not label Stable or live-certified.
+1. Implement Windows Documents known-folder resolver and cloud-path preflight.
+2. Back up and migrate NinjaTrader user-data off OneDrive onto the local Documents folder.
+3. Build the customer `TradeCopia-Setup-*.exe`, no-F5 AddOn deploy, self-contained companion, fail-closed SIM executor, and GitHub pre-release artifacts.
+4. Dogfood the real setup EXE. Do not label Stable or live-certified.

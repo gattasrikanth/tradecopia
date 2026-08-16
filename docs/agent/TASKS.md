@@ -50,6 +50,20 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | P9-01 | Local dashboard SPA | DONE |
 | P9-02 | Playwright E2E | DONE |
 
-## Later phases
+## Installer / OneDrive / SIM certification (2026-08-16 plan)
 
-See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14. Do not start them until Phase 2 acceptance is met, except for independent docs/CI that do not invert the dependency order.
+| ID | Task | Status |
+| --- | --- | --- |
+| I-A1 | Commit plan + agent state | IN_PROGRESS |
+| I-A2 | Machine inventory (redacted) | IN_PROGRESS |
+| I-B | Backup + migrate NT user-data off OneDrive | TODO |
+| I-C | Known-folder resolver + cloud-path policy | TODO |
+| I-D | Customer installer + companion lifecycle | TODO |
+| I-E | No-F5 native AddOn deployment | TODO |
+| I-H | Self-contained publish + GitHub pre-release | TODO |
+| I-I | Automated installer tests | TODO |
+| I-K | SIM-only native executor at execution boundary | TODO |
+| I-J | Dogfood real TradeCopia-Setup-*.exe | TODO |
+| I-L | Docs + implementation report | TODO |
+
+See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14 and `docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md`.
