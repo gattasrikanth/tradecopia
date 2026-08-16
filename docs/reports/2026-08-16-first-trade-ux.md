@@ -8,7 +8,7 @@ Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.7
 ## Artifact
 
 - File: `TradeCopia-Setup-0.1.0-alpha.7.exe`
-- SHA-256: *(filled after package)*
+- SHA-256: `C38E61AA16305D533D05B5D409D88FE95151725E4197427F54E486B29F01C5AF`
 - Does not overwrite `v0.1.0-alpha.5` or `v0.1.0-alpha.6`.
 - Alpha.7: Save & Activate updates one logical group; customer list is one card; preferred pairing is Simulation leader → Demo/Paper follower.
 

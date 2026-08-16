@@ -11,7 +11,7 @@ Phase status: FIRST_TRADE_UX_ALPHA. Not Stable. Not live-certified.
 - Customer install certified from GitHub Release `v0.1.0-alpha.1`.
 - Real-account discovery and native copy path shipped as `v0.1.0-alpha.5`.
 - First-trade UX (customer labels, Save & Activate, preflight, Pause/Disable states) shipped as `v0.1.0-alpha.6`.
-- Published setup SHA-256: `76252F5555709FC791EF765EC126E0017C3E208BD34BF6E88310F5D7A6A7CBA7`.
+- Published setup SHA-256: `C38E61AA16305D533D05B5D409D88FE95151725E4197427F54E486B29F01C5AF`.
 - Start Menu launches installed single-file `TradeCopia.Launcher.exe`; companion starts; copying disabled; loopback only.
 
 ## Current invariants / locked decisions
