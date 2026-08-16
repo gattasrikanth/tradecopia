@@ -15,6 +15,7 @@ Phase status: COMPLETE_ALPHA (independent work). Not Stable. Not live-certified.
 - No-F5 native deploy copies `TradeCopia.*` only into `bin\Custom`.
 - SIM native submit gated on official `Provider` Simulator/Playback; live/unknown fail closed.
 - Dogfood install from setup on this machine; copying starts disabled.
+- Published Alpha setup: `TradeCopia-Setup-0.1.0-alpha.1.exe` SHA-256 `EF8188515B8E07DD9C64AE8CE1DEA7F683903C0374E7F9416B26BB90F1701AFA` (GitHub pre-release `v0.1.0-alpha.1`). Start Menu opens `TradeCopia.Launcher.exe`; uninstall removes the Start Menu folder.
 
 ## Current invariants / locked decisions
 

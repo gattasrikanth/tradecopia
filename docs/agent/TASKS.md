@@ -60,7 +60,7 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | I-C | Known-folder resolver + cloud-path policy | DONE |
 | I-D | Customer installer + companion lifecycle | DONE |
 | I-E | No-F5 native AddOn deployment | DONE |
-| I-H | Self-contained publish + GitHub pre-release | DONE |
+| I-H | Self-contained publish + GitHub pre-release (`v0.1.0-alpha.1`, SHA-256 `EF8188515B8E07DD9C64AE8CE1DEA7F683903C0374E7F9416B26BB90F1701AFA`) | DONE |
 | I-I | Automated installer tests | DONE |
 | I-K | SIM-only native executor at execution boundary | DONE |
 | I-J | Dogfood real TradeCopia-Setup-*.exe | DONE |
