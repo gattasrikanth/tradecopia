@@ -3,13 +3,14 @@
 **Status language:** Alpha. Not Stable. Not live-certified. No order was submitted.
 
 Repository: https://github.com/gattasrikanth/tradecopia  
-Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.6
+Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.7
 
 ## Artifact
 
-- File: `TradeCopia-Setup-0.1.0-alpha.6.exe`
-- SHA-256: `76252F5555709FC791EF765EC126E0017C3E208BD34BF6E88310F5D7A6A7CBA7`
-- Does not overwrite `v0.1.0-alpha.5`.
+- File: `TradeCopia-Setup-0.1.0-alpha.7.exe`
+- SHA-256: *(filled after package)*
+- Does not overwrite `v0.1.0-alpha.5` or `v0.1.0-alpha.6`.
+- Alpha.7: Save & Activate updates one logical group; customer list is one card; preferred pairing is Simulation leader → Demo/Paper follower.
 
 ## What shipped
 

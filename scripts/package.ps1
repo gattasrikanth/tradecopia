@@ -11,7 +11,7 @@ if (-not $OutputDir) {
     $OutputDir = Join-Path $root 'artifacts\package'
 }
 
-$version = '0.1.0-alpha.6'
+$version = '0.1.0-alpha.7'
 $payload = Join-Path $OutputDir 'payload'
 $appOut = Join-Path $payload 'app'
 $nativeOut = Join-Path $payload 'native'

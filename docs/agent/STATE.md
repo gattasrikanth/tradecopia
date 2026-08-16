@@ -3,7 +3,7 @@
 Last updated: 2026-08-16
 Current branch: main
 HEAD: see `git rev-parse HEAD` (do not add pin-only SHA commits)
-Current phase: First-trade UX / Alpha.6
+Current phase: First-trade UX / Alpha.7
 Phase status: FIRST_TRADE_UX_ALPHA. Not Stable. Not live-certified.
 
 ## Completed
