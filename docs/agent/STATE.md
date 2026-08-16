@@ -1,39 +1,35 @@
 # Agent State
 
-Last updated: 2026-08-16T12:30:00Z
+Last updated: 2026-08-16T18:40:00Z
 Current branch: main
-HEAD: b638b8f
-Current phase: Phase 8
+HEAD: (update after push)
+Current phase: Phase 12
 Phase status: IN_PROGRESS
 
 ## Completed
 
-- Phase 0–1 governance and ADRs.
-- Phase 2 domain engine (coordinator, sizing, topology, mapping, fingerprints, origin registry, reconcile planner). Coverage still below 95/90.
-- Native AddOn compiles locally (`net481`) against NinjaTrader 8.1.8.2. Inherits `AddOnBase`. **Does not submit orders.**
-- Control plane: loopback bind, host/origin/CSRF, demo API, dashboard SPA, SQLite store with patched native SQLite.
-- Docs: first-run, install, localhost security, SIM certification checklist.
+- Domain: coordinator restart-disable, latency sample, bounded telemetry, mapping, sizing, topology, SIM fail-closed.
+- IPC: ProtocolSession handshake, version fail-closed, ExecuteOrder rejected, reconnect requires handshake.
+- SIM submit: SimulationGuardedExecutor requires TriState.KnownTrue; DisabledOrderExecutor remains default.
+- Control plane + demo dashboard; Playwright critical flow green locally.
+- Coverage exception documented (domain ~87.7/75.8; NT wrappers out of public CI).
 
 ## Current invariants / locked decisions
 
-- TradeCopia / Apache-2.0 / `TradeCopia.*`
-- Copying starts disabled
-- No generic browser order-entry API
-- Bind `127.0.0.1` only
-- Unknown is never healthy
+- Copying starts disabled. No generic order-entry API.
+- Bind 127.0.0.1 only. CSRF required on POST.
+- Simulation identity is fail-closed (Unknown is not SIM).
 
 ## Tests last run
 
-- `dotnet test TradeCopia.slnx` — domain 61, protocol 4, architecture 4, control plane 8 (verify again before commit)
-- Native `dotnet build src/Native/TradeCopia.Native` — succeeded locally
-- `pwsh ./scripts/parse-scripts.ps1` — OK
+- `dotnet test TradeCopia.slnx` — protocol 11, architecture 4, domain 78, control plane 8 (re-verify before final)
+- Playwright dashboard.spec.ts — passed
 
 ## Known blockers
 
-- NT user-data directory missing until the owner launches NinjaTrader once (`install-local` and SIM cert)
-- Named-pipe live connection and SIM submit executor not yet wired
-- Domain coverage gate not met
-- Playwright/screenshots not done
+- NT user-data dir missing (install-local / manual SIM).
+- Public CI cannot compile NT-referenced AddOn (no proprietary DLLs).
+- Domain coverage below 95/90; documented in docs/development/coverage-exceptions.md.
 
 ## Active subagents/worktrees
 
@@ -41,8 +37,4 @@ Phase status: IN_PROGRESS
 
 ## Next exact action
 
-- Push this checkpoint.
-- Add named-pipe client/server framing integration.
-- Continue SIM executor behind DisabledOrderExecutor + positive SIM detection.
-- Raise domain coverage.
-- Do not label Stable.
+- Final verification, implementation report, push, clean tree.

@@ -22,3 +22,8 @@ first numbered release exists.
 - Native AddOn compiles against local NinjaTrader 8.1.8.2 (`net481`) with order submission disabled.
 - Loopback control plane, CSRF/host/origin defenses, demo dashboard SPA.
 - Local SQLite persistence using a patched native SQLite package.
+- Protocol session handshake, reconnect, and explicit ExecuteOrder rejection.
+- Simulation-guarded executor (Unknown is not simulation).
+- Engine restart leaves copying disabled.
+- Playwright dashboard flow against synthetic demo data.
+- `scripts/package.ps1` Alpha packaging (no NinjaTrader binaries).

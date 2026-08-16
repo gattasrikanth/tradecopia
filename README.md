@@ -61,6 +61,13 @@ pwsh ./scripts/run-control-plane.ps1
 
 Then open `http://127.0.0.1:17841`. Copying starts **disabled**. There is no generic order-entry API.
 
+```powershell
+pwsh ./scripts/test-e2e.ps1   # Playwright against demo data
+pwsh ./scripts/package.ps1    # Alpha control-plane publish (no NT binaries)
+```
+
+**Alpha / automated tests only; manual NinjaTrader SIM certification required before live use.**
+
 ## Privacy
 
 TradeCopia stores configuration and journal data on the local machine only

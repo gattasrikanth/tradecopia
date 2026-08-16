@@ -36,7 +36,7 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | P2-02 | Identifiers, events, config, sizing, topology | DONE |
 | P2-03 | State machines and execution intents | DONE |
 | P2-04 | Fake NinjaTrader adapter + fixtures | DONE |
-| P2-05 | Unit / property / architecture tests | IN_PROGRESS |
+| P2-05 | Unit / property / architecture tests | DONE |
 
 ## Phase 7–9 — Control plane and dashboard
 
@@ -46,7 +46,7 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | P8-01 | Loopback control plane + security | DONE |
 | P8-02 | Demo API and journal/analytics read models | DONE |
 | P9-01 | Local dashboard SPA | DONE |
-| P9-02 | Playwright E2E | TODO |
+| P9-02 | Playwright E2E | DONE |
 
 ## Later phases
 
