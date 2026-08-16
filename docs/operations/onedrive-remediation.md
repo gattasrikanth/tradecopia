@@ -28,4 +28,6 @@ That path must not resolve under OneDrive.
 
 If OneDrive shows **Stop backup** / **Keep files on this PC**, choose keep-local. Do not delete cloud files.
 
+After the Documents known folder is remapped, NinjaTrader may show a connection or account login with a **blank password box** even when the username is still saved. TradeCopia does not copy or fill credentials. Re-enter the password once, keep “remember” checked if you use that, and connect. Do this on **SIM / demo** connections first.
+
 See also: [NinjaTrader OneDrive article](https://support.ninjatrader.com/s/article/Unhandled-exception-Access-to-the-path-is-denied-OneDrive-Error).
