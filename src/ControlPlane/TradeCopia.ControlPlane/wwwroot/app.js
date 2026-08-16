@@ -99,8 +99,7 @@ const pages = {
     setAlerts(p.alertHtml || "");
     const discovered = accounts.accounts || [];
     if (!state.leaderKey && discovered.length) {
-      var first = discovered.find((a) => a.availableAsLeader);
-      state.leaderKey = first ? first.stableKey : "";
+      state.leaderKey = preferredLeaderKey(discovered);
     }
     const form = accounts.error
       ? "<div class=\"empty\">" + escapeHtml(accounts.message || "NinjaTrader engine disconnected. Launch/connect NinjaTrader to discover accounts.") + "</div>"
@@ -180,12 +179,27 @@ function groupForm(discovered, status) {
     "<div class=\"actions\"><button class=\"btn primary\" id=\"gsave\"" + (status.engineConnected ? "" : " disabled") + ">Save &amp; Activate</button></div></div>";
 }
 
+function preferredLeaderKey(discovered) {
+  var sims = discovered.filter((a) => a.availableAsLeader && a.safetyLabel === "Simulation");
+  var named = sims.find((a) => String(a.displayName || "").toLowerCase().indexOf("backtest") < 0);
+  var pick = named || sims[0] || discovered.find((a) => a.availableAsLeader);
+  return pick ? pick.stableKey : "";
+}
+
+function preferredFollowerKeys(discovered, leaderKey) {
+  return discovered.filter((a) => a.availableAsFollower && a.stableKey !== leaderKey && a.safetyLabel === "Demo / Paper")
+    .map((a) => a.stableKey);
+}
+
 function followerChoices(discovered, leaderKey) {
+  var preferred = preferredFollowerKeys(discovered, leaderKey);
   return discovered.map((a) => {
     var locked = !a.availableAsFollower || a.stableKey === leaderKey;
     var reason = a.stableKey === leaderKey ? "This account is the leader" : (a.lockReason || a.eligibilityLabel);
+    var checked = !locked && preferred.indexOf(a.stableKey) >= 0;
     return "<label class=\"choice" + (locked ? " locked" : "") + "\">" +
-      "<input type=\"checkbox\" name=\"follower\" value=\"" + escapeHtml(a.stableKey) + "\"" + (locked ? " disabled" : "") + ">" +
+      "<input type=\"checkbox\" name=\"follower\" value=\"" + escapeHtml(a.stableKey) + "\"" +
+      (locked ? " disabled" : "") + (checked ? " checked" : "") + ">" +
       "<span><div class=\"name\">" + escapeHtml(visibleName(a.displayName)) + "</div>" +
       "<div class=\"hint\">" + escapeHtml(a.safetyLabel) + " · " + escapeHtml(a.connectionLabel || "Connected") +
       " · " + escapeHtml(locked ? reason : "Available") + "</div></span></label>";
@@ -232,7 +246,9 @@ function bindGroupForm(discovered, status) {
       err.hidden = true;
       try {
         var followers = Array.from(document.querySelectorAll("input[name=follower]:checked")).map((el) => el.value);
+        var existing = document.querySelector(".group-card");
         await api("/api/v1/groups/save-and-activate", { method: "POST", body: JSON.stringify({
+          id: existing ? existing.getAttribute("data-group") : "",
           name: document.getElementById("gname").value,
           leaderKey: document.getElementById("gleader").value,
           followerKeys: followers,

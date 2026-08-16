@@ -126,6 +126,45 @@ public class CustomerPresentationTests
         Assert.Equal(1, store.List().Count(g => g.Id == ok.Group.Id));
         Assert.Equal("1 : 1", CustomerPresentation.SizingLabel(ok.Group.Sizing));
         Assert.Equal("Sim101", CustomerPresentation.DisplayNameFor(accounts, ok.Group.LeaderKey));
+
+        var again = store.SaveAndActivate(null, "Primary", Sim().StableKey, new[] { Demo().StableKey }, "OneToOne", accounts);
+        Assert.True(again.Ok);
+        Assert.Equal(ok.Group.Id, again.Group!.Id);
+        Assert.Single(store.List());
+        Assert.Single(store.ListCustomerCards());
+        Assert.Equal("active", again.Group.Status);
+    }
+
+    [Fact]
+    public void Two_saves_without_id_do_not_create_two_customer_cards()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "tc-cards-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "groups.json"),
+            "[{\"Id\":\"draft1\",\"Name\":\"Primary\",\"LeaderKey\":\"Provider31|3\",\"FollowerKeys\":[\"Simulator|2\"],\"Sizing\":\"OneToOne\",\"Status\":\"draft\",\"Version\":5}," +
+            "{\"Id\":\"active1\",\"Name\":\"Primary\",\"LeaderKey\":\"Provider31|3\",\"FollowerKeys\":[\"Simulator|2\"],\"Sizing\":\"OneToOne\",\"Status\":\"active\",\"Version\":3}]");
+        var store = new GroupConfigStore(dir);
+        Assert.Single(store.ListCustomerCards());
+        var accounts = new[] { Sim(), Demo() };
+        var first = store.SaveAndActivate(null, "Primary", Sim().StableKey, new[] { Demo().StableKey }, "OneToOne", accounts);
+        var second = store.SaveAndActivate(null, "Primary", Sim().StableKey, new[] { Demo().StableKey }, "OneToOne", accounts);
+        Assert.True(first.Ok);
+        Assert.True(second.Ok);
+        Assert.Equal(first.Group!.Id, second.Group!.Id);
+        Assert.Single(store.List());
+        Assert.Single(store.ListCustomerCards());
+        Assert.Equal(Sim().StableKey, second.Group.LeaderKey);
+        Assert.Equal(Demo().StableKey, second.Group.FollowerKeys.Single());
+    }
+
+    [Fact]
+    public void Preferred_pair_is_simulation_leader_and_demo_follower()
+    {
+        var backtest = new EngineAccountRecord("Simulator|0", "Backtest", "Simulator", "Simulation", false, AccountSafetyClass.Simulation);
+        var pair = CustomerPresentation.PreferredPair(new[] { backtest, Sim(), Demo(), Live() });
+        Assert.Equal(Sim().StableKey, pair.LeaderKey);
+        Assert.Equal(Demo().StableKey, pair.FollowerKeys.Single());
+        Assert.DoesNotContain(backtest.StableKey, pair.FollowerKeys);
     }
 
     [Fact]

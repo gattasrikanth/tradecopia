@@ -186,7 +186,7 @@ api.MapGet("/accounts", (EngineLink engine) =>
 api.MapGet("/groups", (GroupConfigStore store, EngineLink engine) =>
 {
     var accounts = engine.Accounts;
-    return Results.Json(store.List().Select(g => new
+    return Results.Json(store.ListCustomerCards().Select(g => new
     {
         g.Id,
         g.Name,

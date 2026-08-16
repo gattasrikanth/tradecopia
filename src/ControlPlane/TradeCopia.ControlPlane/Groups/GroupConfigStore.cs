@@ -36,6 +36,19 @@ public sealed class GroupConfigStore
         }
     }
 
+    public IReadOnlyList<GroupRecord> ListCustomerCards()
+    {
+        lock (_gate)
+        {
+            CompactDuplicatesUnlocked();
+            return _groups
+                .GroupBy(g => string.IsNullOrWhiteSpace(g.Name) ? g.Id : g.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.FirstOrDefault(x => x.Status == "active") ?? g.Last())
+                .Select(Clone)
+                .ToList();
+        }
+    }
+
     public GroupRecord CreateDraft(string name, string leaderKey, IEnumerable<string> followers, string sizing = "OneToOne")
     {
         var record = new GroupRecord
@@ -92,13 +105,24 @@ public sealed class GroupConfigStore
         IReadOnlyList<EngineAccountRecord> accounts)
     {
         GroupRecord draft;
-        if (string.IsNullOrWhiteSpace(id))
+        var resolvedId = id;
+        if (string.IsNullOrWhiteSpace(resolvedId))
+        {
+            lock (_gate)
+            {
+                CompactDuplicatesUnlocked();
+                var existing = FindLogicalUnlocked(name);
+                resolvedId = existing?.Id;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(resolvedId))
         {
             draft = CreateDraft(name, leaderKey, followers, sizing);
         }
         else
         {
-            var updated = ReplaceDraft(id, name, leaderKey, followers, sizing);
+            var updated = ReplaceDraft(resolvedId, name, leaderKey, followers, sizing);
             if (updated == null)
             {
                 return (false, "not-found", null);
@@ -167,13 +191,12 @@ public sealed class GroupConfigStore
                 return (false, reason, Clone(group));
             }
 
-            foreach (var other in _groups)
-            {
-                if (other.Status == "active")
-                {
-                    other.Status = "draft";
-                }
-            }
+            _groups.RemoveAll(other =>
+                other.Id != group.Id
+                && string.Equals(
+                    string.IsNullOrWhiteSpace(other.Name) ? other.Id : other.Name.Trim(),
+                    string.IsNullOrWhiteSpace(group.Name) ? group.Id : group.Name.Trim(),
+                    StringComparison.OrdinalIgnoreCase));
 
             group.Status = "active";
             group.Version++;
@@ -235,6 +258,37 @@ public sealed class GroupConfigStore
 
         var json = File.ReadAllText(_path);
         _groups = JsonSerializer.Deserialize<List<GroupRecord>>(json) ?? new List<GroupRecord>();
+        CompactDuplicatesUnlocked();
+        Persist();
+    }
+
+    private GroupRecord? FindLogicalUnlocked(string name)
+    {
+        var key = string.IsNullOrWhiteSpace(name) ? "Primary" : name.Trim();
+        var named = _groups.Where(g =>
+            string.Equals(string.IsNullOrWhiteSpace(g.Name) ? "Primary" : g.Name.Trim(), key, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (named.Count == 0 && _groups.Count == 1)
+        {
+            return _groups[0];
+        }
+
+        return named.FirstOrDefault(g => g.Status == "active") ?? named.LastOrDefault();
+    }
+
+    private void CompactDuplicatesUnlocked()
+    {
+        if (_groups.Count < 2)
+        {
+            return;
+        }
+
+        var keep = new List<GroupRecord>();
+        foreach (var set in _groups.GroupBy(g => string.IsNullOrWhiteSpace(g.Name) ? g.Id : g.Name.Trim(), StringComparer.OrdinalIgnoreCase))
+        {
+            keep.Add(set.FirstOrDefault(x => x.Status == "active") ?? set.Last());
+        }
+
+        _groups = keep;
     }
 
     private void Persist()

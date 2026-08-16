@@ -268,6 +268,26 @@ public static class CustomerPresentation
         return "NinjaTrader engine disconnected. Launch/connect NinjaTrader to discover accounts.";
     }
 
+    public static (string? LeaderKey, IReadOnlyList<string> FollowerKeys) PreferredPair(IReadOnlyList<EngineAccountRecord> accounts)
+    {
+        var choices = Choices(accounts, null);
+        var sims = choices.Where(c => c.AvailableAsLeader && c.SafetyLabel == "Simulation").ToList();
+        var leader = sims.FirstOrDefault(c =>
+            c.DisplayName.IndexOf("backtest", StringComparison.OrdinalIgnoreCase) < 0) ?? sims.FirstOrDefault();
+        if (leader == null)
+        {
+            return (null, Array.Empty<string>());
+        }
+
+        var followers = choices
+            .Where(c => c.AvailableAsFollower
+                && c.StableKey != leader.StableKey
+                && c.SafetyLabel == "Demo / Paper")
+            .Select(c => c.StableKey)
+            .ToList();
+        return (leader.StableKey, followers);
+    }
+
     private static string Escape(string value)
     {
         return (value ?? "").Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
