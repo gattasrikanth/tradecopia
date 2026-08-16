@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Shared\TradeCopia.Domain\TradeCopia.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Shared\TradeCopia.Protocol\TradeCopia.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\Native\TradeCopia.Native.Adapter\TradeCopia.Native.Adapter.csproj" />
     <ProjectReference Include="..\..\tools\FakeNinjaTrader\TradeCopia.FakeNinjaTrader.csproj" />
   </ItemGroup>
 

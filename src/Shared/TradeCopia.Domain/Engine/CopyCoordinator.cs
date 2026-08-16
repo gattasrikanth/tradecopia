@@ -8,6 +8,7 @@ using TradeCopia.Domain.Model;
 using TradeCopia.Domain.Origin;
 using TradeCopia.Domain.Mapping;
 using TradeCopia.Domain.Sizing;
+using TradeCopia.Domain.Telemetry;
 using TradeCopia.Domain.Time;
 
 namespace TradeCopia.Domain.Engine
@@ -27,6 +28,7 @@ namespace TradeCopia.Domain.Engine
         public IReadOnlyList<ExecutionIntent> Intents { get; }
         public IReadOnlyList<LogicalOrder> Orders { get; }
         public IReadOnlyList<string> Warnings { get; }
+        public LatencySample? Latency { get; set; }
 
         public int SubmitCount
         {
@@ -79,6 +81,18 @@ namespace TradeCopia.Domain.Engine
             _config = config;
         }
 
+        public void ResetAfterEngineRestart()
+        {
+            _orders.Clear();
+            _seenExecutions.Clear();
+            _config = new ActiveConfigSnapshot(
+                _config.Version,
+                EngineSafetyState.Disabled,
+                _config.Risk,
+                _config.Groups,
+                _config.Accounts);
+        }
+
         public CoordinatorResult ProcessOrder(NormalizedOrderEvent evt)
         {
             if (evt == null)
@@ -92,10 +106,10 @@ namespace TradeCopia.Domain.Engine
             if (_origins.IsCopierOriginated(evt.Account, evt.OrderKey.Value)
                 || LooksLikeCopierName(evt.OrderName))
             {
-                return new CoordinatorResult(
+                return Finish(evt, new CoordinatorResult(
                     new[] { ExecutionIntent.NoOp(evt.EventId, _clock.UtcNow, "loop-prevention") },
                     SnapshotOrders(),
-                    warnings);
+                    warnings));
             }
 
             var fingerprint = SemanticFingerprint.Compute(evt);
@@ -154,7 +168,7 @@ namespace TradeCopia.Domain.Engine
             }
 
             ApplyObservedMutation(existing, evt);
-            return new CoordinatorResult(intents, SnapshotOrders(), warnings);
+            return Finish(evt, new CoordinatorResult(intents, SnapshotOrders(), warnings));
         }
 
         public CoordinatorResult ProcessExecution(NormalizedExecutionEvent evt)
@@ -582,6 +596,12 @@ namespace TradeCopia.Domain.Engine
                 string.Empty,
                 klass + ":" + reason,
                 _clock.UtcNow);
+        }
+
+        private CoordinatorResult Finish(NormalizedOrderEvent evt, CoordinatorResult result)
+        {
+            result.Latency = new LatencySample(evt.ObservedHighResTicks, _clock.HighResolutionTicks);
+            return result;
         }
 
         private IReadOnlyList<LogicalOrder> SnapshotOrders()
