@@ -1,6 +1,5 @@
 # Next actions
 
-1. Owner: confirm the two real non-live accounts on the installed dashboard.
-2. Owner: create / validate / activate a group, then enable non-live copying.
-3. Owner: one MNQ SIM/demo leader market order to a follower.
-4. Published setup SHA-256 is `2E9C2DBEFF833221EE68C2A51B441083738B912BFC8F97F760A18AD013ABF932`. Do not label Stable.
+1. Owner: verify the displayed SIM leader and Demo follower.
+2. Owner: click Enable Non-Live Copying, then place one 1-MNQ leader market order.
+3. Published setup SHA-256 is `76252F5555709FC791EF765EC126E0017C3E208BD34BF6E88310F5D7A6A7CBA7`. Do not label Stable.

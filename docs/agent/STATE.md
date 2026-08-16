@@ -3,14 +3,15 @@
 Last updated: 2026-08-16
 Current branch: main
 HEAD: see `git rev-parse HEAD` (do not add pin-only SHA commits)
-Current phase: Real NT account discovery / dashboard Alpha.2
-Phase status: REAL_ACCOUNTS_ALPHA. Not Stable. Not live-certified.
+Current phase: First-trade UX / Alpha.6
+Phase status: FIRST_TRADE_UX_ALPHA. Not Stable. Not live-certified.
 
 ## Completed
 
 - Customer install certified from GitHub Release `v0.1.0-alpha.1`.
-- Real-account discovery, official-metadata classification (ADR-0010), draft/validate/activate, native copy path, and no-fixture APIs shipped as `v0.1.0-alpha.5`.
-- Published setup SHA-256: `2E9C2DBEFF833221EE68C2A51B441083738B912BFC8F97F760A18AD013ABF932`.
+- Real-account discovery and native copy path shipped as `v0.1.0-alpha.5`.
+- First-trade UX (customer labels, Save & Activate, preflight, Pause/Disable states) shipped as `v0.1.0-alpha.6`.
+- Published setup SHA-256: `76252F5555709FC791EF765EC126E0017C3E208BD34BF6E88310F5D7A6A7CBA7`.
 - Start Menu launches installed single-file `TradeCopia.Launcher.exe`; companion starts; copying disabled; loopback only.
 
 ## Current invariants / locked decisions
