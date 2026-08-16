@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ControlPlane\TradeCopia.ControlPlane\TradeCopia.ControlPlane.csproj" />
     <ProjectReference Include="..\..\src\ControlPlane\TradeCopia.Analytics\TradeCopia.Analytics.csproj" />
+    <ProjectReference Include="..\..\src\Shared\TradeCopia.Protocol\TradeCopia.Protocol.csproj" />
   </ItemGroup>
 
 </Project>

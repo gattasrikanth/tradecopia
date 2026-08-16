@@ -5,6 +5,7 @@ using TradeCopia.ControlPlane.Commands;
 using TradeCopia.ControlPlane.Demo;
 using TradeCopia.ControlPlane.Security;
 using TradeCopia.Persistence;
+using TradeCopia.Protocol;
 
 var options = ControlPlaneOptions.FromArgs(args);
 if (!LoopbackGuard.IsLoopbackBind(options.BindAddress))
@@ -39,6 +40,7 @@ builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DemoCatalog>();
 builder.Services.AddSingleton<ConfirmationStore>();
+builder.Services.AddSingleton<EngineLink>();
 builder.Services.AddSingleton(_ => new LocalDatabase(options.DataDirectory, "control.db"));
 
 var app = builder.Build();
@@ -47,8 +49,15 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 var api = app.MapGroup("/api/v1");
-api.MapGet("/system/status", (ControlPlaneOptions opt, DemoCatalog demo) =>
-    Results.Json(new { opt.Port, opt.BindAddress, opt.DemoMode, details = demo.SystemStatus() }));
+api.MapGet("/system/status", (ControlPlaneOptions opt, DemoCatalog demo, EngineLink engine) =>
+    Results.Json(new
+    {
+        opt.Port,
+        opt.BindAddress,
+        opt.DemoMode,
+        engineConnected = engine.IsConnected,
+        details = demo.SystemStatus()
+    }));
 api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha", commit = "local" }));
 api.MapGet("/system/health", () => Results.Json(new { status = "ok", copying = "disabled" }));
 api.MapGet("/system/capabilities", () => Results.Json(new
@@ -74,10 +83,10 @@ api.MapGet("/analytics/reliability", (DemoCatalog demo) => Results.Json(demo.Ana
 api.MapGet("/diagnostics/status", (DemoCatalog demo) => Results.Json(demo.Diagnostics()));
 api.MapGet("/diagnostics/errors", () => Results.Json(Array.Empty<object>()));
 
-api.MapPost("/groups/{groupId}/pause-new-entries", (string groupId) =>
-    Results.Json(new { accepted = true, command = "PAUSE_NEW_ENTRIES", groupId, note = "No orders submitted." }));
-api.MapPost("/groups/{groupId}/disable", (string groupId) =>
-    Results.Json(new { accepted = true, command = "DISABLE_GROUP", groupId }));
+api.MapPost("/groups/{groupId}/pause-new-entries", (string groupId, EngineLink engine) =>
+    FailClosedCommand(engine, ProtocolMessageTypes.PauseNewEntries, groupId));
+api.MapPost("/groups/{groupId}/disable", (string groupId, EngineLink engine) =>
+    FailClosedCommand(engine, ProtocolMessageTypes.DisableGroup, groupId));
 
 api.MapPost("/flatten/prepare", (ConfirmationStore confirmations) =>
 {
@@ -124,5 +133,35 @@ api.MapGet("/events/stream", async (HttpContext http, DemoCatalog demo, Cancella
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+static IResult FailClosedCommand(EngineLink engine, string messageType, string groupId)
+{
+    if (!engine.IsConnected)
+    {
+        return Results.Json(new
+        {
+            accepted = false,
+            error = "engine-disconnected",
+            submitted = false,
+            groupId,
+            command = messageType
+        }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    var result = engine.Send(messageType);
+    if (!result.Accepted)
+    {
+        return Results.Json(new
+        {
+            accepted = false,
+            error = result.Reason,
+            submitted = false,
+            groupId,
+            command = messageType
+        }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    return Results.Json(new { accepted = true, command = messageType, groupId, submitted = false });
+}
 
 public partial class Program;

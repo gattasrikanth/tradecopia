@@ -69,6 +69,24 @@ public class ApiSecurityTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Pause_and_disable_fail_closed_when_engine_disconnected()
+    {
+        var client = _factory.CreateClient();
+        var bootstrap = await client.GetFromJsonAsync<Bootstrap>("/api/v1/system/bootstrap");
+        client.DefaultRequestHeaders.Add("X-CSRF-Token", bootstrap!.CsrfToken);
+        var pause = await client.PostAsJsonAsync("/api/v1/groups/demo/pause-new-entries", new { });
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, pause.StatusCode);
+        var pauseBody = await pause.Content.ReadAsStringAsync();
+        Assert.Contains("engine-disconnected", pauseBody);
+        Assert.DoesNotContain("\"accepted\":true", pauseBody);
+
+        var disable = await client.PostAsJsonAsync("/api/v1/groups/demo/disable", new { });
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, disable.StatusCode);
+        var disableBody = await disable.Content.ReadAsStringAsync();
+        Assert.Contains("engine-disconnected", disableBody);
+    }
+
+    [Fact]
     public async Task Evil_origin_is_rejected()
     {
         var client = _factory.CreateClient();
