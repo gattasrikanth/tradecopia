@@ -18,20 +18,13 @@ jobs:
     name: analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Detect analyzable source
-        id: detect
-        run: |
-          if find src tests -type f \( -name '*.cs' -o -name '*.ts' -o -name '*.tsx' -o -name '*.js' \) 2>/dev/null | grep -q .; then
-            echo "has_source=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_source=false" >> "$GITHUB_OUTPUT"
-            echo "No application source yet; CodeQL analysis is deferred."
-          fi
+      - uses: actions/checkout@v5
       - uses: github/codeql-action/init@v3
-        if: steps.detect.outputs.has_source == 'true'
         with:
-          languages: csharp,javascript-typescript
+          languages: csharp
+          queries: security-extended
+      - uses: github/codeql-action/autobuild@v3
       - uses: github/codeql-action/analyze@v3
-        if: steps.detect.outputs.has_source == 'true'
+        with:
+          category: "/language:csharp"
 
