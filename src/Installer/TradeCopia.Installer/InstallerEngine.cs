@@ -74,10 +74,8 @@ public sealed class InstallerEngine
 
         if (!string.IsNullOrWhiteSpace(request.StartMenuPrograms))
         {
-            var menu = Path.Combine(request.StartMenuPrograms, ProductInfo.ProductName);
-            Directory.CreateDirectory(menu);
-            var shortcut = Path.Combine(menu, "Open TradeCopia.url");
-            File.WriteAllText(shortcut, "[InternetShortcut]\r\nURL=" + ProductInfo.LoopbackUrl + "\r\n");
+            var launcher = Path.Combine(ProductLayout.AppDirectory(root), ProductInfo.LauncherExe);
+            var shortcut = StartMenuInstall.WriteLauncherShortcut(request.StartMenuPrograms, launcher);
             written.Add(shortcut);
         }
 
@@ -94,7 +92,12 @@ public sealed class InstallerEngine
         return new InstallResult(true, "installed", root, written);
     }
 
-    public InstallResult Uninstall(string localAppData, string? documentsOverride, IDocumentsFolder? documents, Func<string, bool>? pathExists = null)
+    public InstallResult Uninstall(
+        string localAppData,
+        string? documentsOverride,
+        IDocumentsFolder? documents,
+        string? startMenuPrograms = null,
+        Func<string, bool>? pathExists = null)
     {
         var root = ProductLayout.PerUserRoot(localAppData);
         if (!Directory.Exists(root))
@@ -145,6 +148,8 @@ public sealed class InstallerEngine
             }
         }
 
+        StartMenuInstall.Remove(startMenuPrograms ?? "");
+
         _ = pathExists;
         _ = preserveData;
         return new InstallResult(true, "uninstalled", root, Array.Empty<string>());
@@ -155,7 +160,12 @@ public sealed class InstallerEngine
         var root = ProductLayout.PerUserRoot(request.LocalAppData);
         if (Directory.Exists(root))
         {
-            Uninstall(request.LocalAppData, request.DocumentsOverride, request.Documents, request.PathExists);
+            Uninstall(
+                request.LocalAppData,
+                request.DocumentsOverride,
+                request.Documents,
+                request.StartMenuPrograms,
+                request.PathExists);
         }
 
         return Install(request);

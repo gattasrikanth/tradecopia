@@ -40,7 +40,11 @@ var request = new InstallRequest
 var engine = new InstallerEngine();
 if (uninstall)
 {
-    var removed = engine.Uninstall(request.LocalAppData, null, request.Documents);
+    var removed = engine.Uninstall(
+        request.LocalAppData,
+        null,
+        request.Documents,
+        request.StartMenuPrograms);
     WriteLine(removed.Succeeded ? "Uninstalled TradeCopia product files." : removed.Reason);
     return removed.Succeeded ? 0 : 2;
 }

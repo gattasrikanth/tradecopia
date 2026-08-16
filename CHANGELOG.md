@@ -10,6 +10,7 @@ first numbered release exists.
 
 ### Added
 
+- Start Menu "Open TradeCopia" launches `TradeCopia.Launcher.exe`; uninstall removes the TradeCopia Start Menu folder.
 - Setup embeds the install payload so `TradeCopia-Setup-*.exe` is a single customer file.
 - Windows Documents known-folder resolver and cloud-path preflight (`TradeCopia.Platform`).
 - Testable per-user installer engine, setup host, and launcher (`TradeCopia.Installer` / Setup / Launcher).

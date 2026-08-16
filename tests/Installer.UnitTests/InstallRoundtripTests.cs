@@ -17,15 +17,17 @@ public class InstallRoundtripTests
         Directory.CreateDirectory(Path.Combine(payload, "native"));
         Directory.CreateDirectory(custom);
         File.WriteAllText(Path.Combine(payload, "app", "TradeCopia.ControlPlane.exe"), "cp");
+        File.WriteAllText(Path.Combine(payload, "app", ProductInfo.LauncherExe), "launcher");
         File.WriteAllText(Path.Combine(payload, "native", "TradeCopia.Native.dll"), "addon");
         File.WriteAllText(Path.Combine(payload, "native", "NinjaTrader.Core.dll"), "forbidden");
 
+        var startMenu = Path.Combine(root, "StartMenu");
         var engine = new InstallerEngine();
         var result = engine.Install(new InstallRequest
         {
             PayloadDirectory = payload,
             LocalAppData = local,
-            StartMenuPrograms = Path.Combine(root, "StartMenu"),
+            StartMenuPrograms = startMenu,
             Documents = new FixedDocumentsFolder(docs),
             PathExists = Directory.Exists,
             DriveFreeBytes = _ => 1_000_000_000,
@@ -40,10 +42,22 @@ public class InstallRoundtripTests
         var version = File.ReadAllText(Path.Combine(ProductLayout.PerUserRoot(local), "version.json"));
         Assert.Contains("disabled", version);
 
-        var uninstall = engine.Uninstall(local, docs, new FixedDocumentsFolder(docs));
+        var launcherPath = Path.Combine(ProductLayout.AppDirectory(ProductLayout.PerUserRoot(local)), ProductInfo.LauncherExe);
+        Assert.True(File.Exists(launcherPath));
+        var menu = StartMenuInstall.ProductFolder(startMenu);
+        var cmd = Path.Combine(menu, StartMenuInstall.CommandShortcutName);
+        Assert.True(File.Exists(cmd));
+        var shortcutText = File.ReadAllText(cmd);
+        Assert.Contains(launcherPath, shortcutText);
+        Assert.DoesNotContain(ProductInfo.LoopbackUrl, shortcutText);
+        Assert.False(File.Exists(Path.Combine(menu, StartMenuInstall.LegacyUrlName)));
+
+        var uninstall = engine.Uninstall(local, docs, new FixedDocumentsFolder(docs), startMenu);
         Assert.True(uninstall.Succeeded);
         Assert.False(File.Exists(Path.Combine(custom, "TradeCopia.Native.dll")));
         Assert.True(Directory.Exists(ProductLayout.DataDirectory(ProductLayout.PerUserRoot(local))));
+        Assert.False(Directory.Exists(menu));
+        Assert.False(File.Exists(cmd));
     }
 
     [Fact]
