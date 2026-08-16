@@ -13,6 +13,8 @@ public sealed class EngineLink : IDisposable
     private string _engineState = "Unknown";
     private bool _copyingEnabled;
     private IReadOnlyList<EngineAccountRecord> _accounts = Array.Empty<EngineAccountRecord>();
+    private IReadOnlyList<LiveCopyRecord> _liveTrades = Array.Empty<LiveCopyRecord>();
+    private IReadOnlyList<LiveDivergenceRecord> _liveDivergences = Array.Empty<LiveDivergenceRecord>();
 
     public string EngineState
     {
@@ -27,6 +29,16 @@ public sealed class EngineLink : IDisposable
     public IReadOnlyList<EngineAccountRecord> Accounts
     {
         get { lock (_gate) { return _accounts; } }
+    }
+
+    public IReadOnlyList<LiveCopyRecord> LiveTrades
+    {
+        get { lock (_gate) { return _liveTrades; } }
+    }
+
+    public IReadOnlyList<LiveDivergenceRecord> LiveDivergences
+    {
+        get { lock (_gate) { return _liveDivergences; } }
     }
 
     public bool IsConnected
@@ -51,6 +63,8 @@ public sealed class EngineLink : IDisposable
                 client.Dispose();
                 _client = null;
                 _accounts = Array.Empty<EngineAccountRecord>();
+                _liveTrades = Array.Empty<LiveCopyRecord>();
+                _liveDivergences = Array.Empty<LiveDivergenceRecord>();
                 return false;
             }
 
@@ -174,6 +188,16 @@ public sealed class EngineLink : IDisposable
         if (payload.Contains("\"accounts\":", StringComparison.Ordinal))
         {
             _accounts = EngineAccountRecord.ParseArray(payload);
+        }
+
+        if (payload.Contains("\"liveTrades\":", StringComparison.Ordinal))
+        {
+            _liveTrades = LiveCopyRecord.ParseArray(payload);
+        }
+
+        if (payload.Contains("\"liveDivergences\":", StringComparison.Ordinal))
+        {
+            _liveDivergences = LiveCopyRecord.ParseDivergences(payload);
         }
     }
 

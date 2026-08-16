@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using TradeCopia.Domain;
 using TradeCopia.Protocol;
 
@@ -27,8 +28,20 @@ namespace TradeCopia.Native
         }
 
         public TradeCopiaEngineHost(Adapter.INativeOrderExecutor inner, Func<AccountKey, TriState> classify)
-            : this(new Adapter.EngineRuntime(EnginePipeName.ForCurrentUser(), inner, classify))
+            : this(new Adapter.EngineRuntime(
+                EnginePipeName.ForCurrentUser(),
+                inner,
+                classify,
+                DefaultDataDirectory()))
         {
+        }
+
+        internal static string DefaultDataDirectory()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "TradeCopia",
+                "data");
         }
 
         public EngineSafetyState State => _runtime.State;

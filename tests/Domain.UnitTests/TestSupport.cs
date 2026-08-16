@@ -68,7 +68,8 @@ namespace TradeCopia.Domain.UnitTests
             decimal? limit = null,
             decimal? stop = null,
             string name = "",
-            AccountKey? account = null)
+            AccountKey? account = null,
+            string alternate = "")
         {
             return new NormalizedOrderEvent(
                 EventId.New(),
@@ -86,7 +87,8 @@ namespace TradeCopia.Domain.UnitTests
                 stop,
                 "Day",
                 string.Empty,
-                name);
+                name,
+                alternate);
         }
     }
 }

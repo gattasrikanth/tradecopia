@@ -52,5 +52,6 @@ test('copy groups uses Save & Activate and hides internal keys', async ({ page, 
   expect(text).toContain('Pause New Entries');
   expect(text).toContain('Disable Copying');
   expect(text).toContain('1 : 1');
+  expect(text).toContain('No copied trades yet');
   expect(text).not.toContain('UNKNOWN');
 });

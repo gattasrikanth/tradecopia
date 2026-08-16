@@ -131,7 +131,7 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine, GroupC
         }
     });
 });
-api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.7", commit = "local" }));
+api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.8", commit = "local" }));
 api.MapGet("/system/health", () => Results.Json(new { status = "ok", copying = "disabled" }));
 api.MapGet("/system/capabilities", () => Results.Json(new
 {
@@ -312,9 +312,54 @@ api.MapPost("/groups/{groupId}/enable", (string groupId, GroupConfigStore store,
 
     return FailClosedCommand(engine, ProtocolMessageTypes.EnableCopying, groupId);
 });
-api.MapGet("/live/trades", (EngineLink engine) => Results.Json(Array.Empty<object>()));
-api.MapGet("/live/orders", (EngineLink engine) => Results.Json(Array.Empty<object>()));
-api.MapGet("/live/divergences", (EngineLink engine) => Results.Json(Array.Empty<object>()));
+api.MapGet("/live/trades", (EngineLink engine) =>
+{
+    var accounts = engine.Accounts;
+    return Results.Json(engine.LiveTrades.Select(t => new
+    {
+        logicalTradeId = t.Id,
+        instrument = t.Instrument,
+        side = t.Side,
+        orderType = t.OrderType,
+        leaderAccount = DisplayAccount(accounts, t.LeaderAccount),
+        leaderKey = t.LeaderAccount,
+        leaderQty = t.LeaderQty,
+        leaderFilled = t.LeaderFilled,
+        leaderState = t.LeaderState,
+        limitPrice = t.LimitPrice,
+        stopPrice = t.StopPrice,
+        updatedAtUtc = t.UpdatedAtUtc,
+        followers = t.Followers.Select(f => new
+        {
+            account = DisplayAccount(accounts, f.Account),
+            accountKey = f.Account,
+            qty = f.Qty,
+            filled = f.Filled,
+            state = f.State,
+            fill = f.Fill,
+            orderName = f.OrderName
+        }).ToArray()
+    }).ToArray());
+});
+api.MapGet("/live/orders", (EngineLink engine) =>
+{
+    return Results.Json(engine.LiveTrades.Select(t => new
+    {
+        id = t.Id,
+        instrument = t.Instrument,
+        side = t.Side,
+        leaderState = t.LeaderState,
+        leaderQty = t.LeaderQty
+    }).ToArray());
+});
+api.MapGet("/live/divergences", (EngineLink engine) =>
+{
+    return Results.Json(engine.LiveDivergences.Select(d => new
+    {
+        className = d.ClassName,
+        detail = d.Detail
+    }).ToArray());
+});
 api.MapGet("/live/health", (EngineLink engine, GroupConfigStore store) =>
 {
     var active = store.List().FirstOrDefault(g => g.Status == "active");
@@ -391,10 +436,10 @@ api.MapPost("/reconcile/execute", () => Results.Json(new { accepted = false, sub
 api.MapMethods("/orders", new[] { "GET", "POST", "PUT", "PATCH", "DELETE" }, () =>
     Results.Json(new { error = "no-generic-order-entry" }, statusCode: StatusCodes.Status404NotFound));
 
-api.MapGet("/events/stream", async (HttpContext http, CancellationToken token) =>
+api.MapGet("/events/stream", async (HttpContext http, EngineLink engine, CancellationToken token) =>
 {
     http.Response.Headers.ContentType = "text/event-stream";
-    var payload = JsonSerializer.Serialize(new { type = "snapshot", trades = Array.Empty<object>() });
+    var payload = JsonSerializer.Serialize(new { type = "snapshot", trades = engine.LiveTrades });
     await http.Response.WriteAsync("event: snapshot\ndata: " + payload + "\n\n", token);
     await http.Response.Body.FlushAsync(token);
 });
@@ -408,6 +453,22 @@ try
 finally
 {
     singleInstance?.Dispose();
+}
+
+static string DisplayAccount(IReadOnlyList<EngineAccountRecord> accounts, string key)
+{
+    if (string.IsNullOrEmpty(key))
+    {
+        return "";
+    }
+
+    var match = accounts.FirstOrDefault(a => a.StableKey == key);
+    if (match != null && !string.IsNullOrWhiteSpace(match.DisplayName))
+    {
+        return match.DisplayName;
+    }
+
+    return key.IndexOf('|') >= 0 ? "Account" : key;
 }
 
 static IResult FailClosedCommand(EngineLink engine, string messageType, string groupId)

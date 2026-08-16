@@ -71,6 +71,7 @@ namespace TradeCopia.Domain.Engine
         public System.DateTime FirstObservedAtUtc { get; }
         public System.DateTime LastObservedAtUtc { get; set; }
         public string LastFingerprint { get; set; }
+        public LeaderOrderState LastLeaderState { get; set; }
         public List<FollowerLink> Links { get; }
         public IntentClassification Classification { get; set; }
     }

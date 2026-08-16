@@ -74,6 +74,10 @@ th { color: var(--muted); font-weight: 600; }
 .group-card { padding: 20px; margin: 16px 0; }
 .group-flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; margin: 16px 0; }
 .arrow { color: var(--muted); text-align: center; font-size: 13px; }
+.live-sync { margin: 0 0 16px; }
+.live-card { margin: 0 0 12px; }
+.live-flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; margin-bottom: 10px; }
+.live-leg p { font-size: 18px; }
 .checks { list-style: none; padding: 0; margin: 12px 0 0; }
 .checks li { padding: 6px 0; color: var(--muted); }
 .checks li.pass { color: var(--ok); }

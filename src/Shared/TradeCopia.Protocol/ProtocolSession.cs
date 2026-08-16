@@ -103,6 +103,7 @@ namespace TradeCopia.Protocol
 
     public sealed class ProtocolSession
     {
+        private readonly object _sync = new object();
         private bool _handshook;
         private string _sessionId;
         private bool _connected = true;
@@ -113,6 +114,8 @@ namespace TradeCopia.Protocol
         private string _leaderKey = string.Empty;
         private readonly List<string> _followerKeys = new List<string>();
         private string _activeConfigVersion = string.Empty;
+        private readonly List<LiveCopyRecord> _liveTrades = new List<LiveCopyRecord>();
+        private readonly List<LiveDivergenceRecord> _liveDivergences = new List<LiveDivergenceRecord>();
 
         public ProtocolSession()
         {
@@ -131,17 +134,52 @@ namespace TradeCopia.Protocol
 
         public void ReplaceAccounts(IEnumerable<EngineAccountRecord> accounts)
         {
-            _accounts.Clear();
-            if (accounts == null)
+            lock (_sync)
             {
-                return;
-            }
-
-            foreach (var account in accounts)
-            {
-                if (account != null && !string.IsNullOrEmpty(account.StableKey))
+                _accounts.Clear();
+                if (accounts == null)
                 {
-                    _accounts.Add(account);
+                    return;
+                }
+
+                foreach (var account in accounts)
+                {
+                    if (account != null && !string.IsNullOrEmpty(account.StableKey))
+                    {
+                        _accounts.Add(account);
+                    }
+                }
+            }
+        }
+
+        public void ReplaceLiveActivity(
+            IReadOnlyList<LiveCopyRecord> trades,
+            IReadOnlyList<LiveDivergenceRecord> divergences)
+        {
+            lock (_sync)
+            {
+                _liveTrades.Clear();
+                if (trades != null)
+                {
+                    for (var i = 0; i < trades.Count; i++)
+                    {
+                        if (trades[i] != null)
+                        {
+                            _liveTrades.Add(trades[i]);
+                        }
+                    }
+                }
+
+                _liveDivergences.Clear();
+                if (divergences != null)
+                {
+                    for (var i = 0; i < divergences.Count; i++)
+                    {
+                        if (divergences[i] != null)
+                        {
+                            _liveDivergences.Add(divergences[i]);
+                        }
+                    }
                 }
             }
         }
@@ -161,6 +199,14 @@ namespace TradeCopia.Protocol
 
         public string SnapshotJson()
         {
+            lock (_sync)
+            {
+                return SnapshotJsonLocked();
+            }
+        }
+
+        private string SnapshotJsonLocked()
+        {
             var accounts = new System.Text.StringBuilder();
             accounts.Append('[');
             for (var i = 0; i < _accounts.Count; i++)
@@ -174,14 +220,44 @@ namespace TradeCopia.Protocol
             }
 
             accounts.Append(']');
+            var trades = new System.Text.StringBuilder();
+            trades.Append('[');
+            for (var i = 0; i < _liveTrades.Count; i++)
+            {
+                if (i > 0)
+                {
+                    trades.Append(',');
+                }
+
+                trades.Append(_liveTrades[i].ToJson());
+            }
+
+            trades.Append(']');
+            var divergences = new System.Text.StringBuilder();
+            divergences.Append('[');
+            for (var i = 0; i < _liveDivergences.Count; i++)
+            {
+                if (i > 0)
+                {
+                    divergences.Append(',');
+                }
+
+                divergences.Append(_liveDivergences[i].ToJson());
+            }
+
+            divergences.Append(']');
             return "{\"engineState\":\"" + _engineState
                 + "\",\"copyingEnabled\":" + (_copyingEnabled ? "true" : "false")
                 + ",\"activeConfigVersion\":\"" + _activeConfigVersion
-                + "\",\"accounts\":" + accounts + "}";
+                + "\",\"accounts\":" + accounts
+                + ",\"liveTrades\":" + trades
+                + ",\"liveDivergences\":" + divergences + "}";
         }
 
         public ProtocolValidationResult Handle(ProtocolEnvelope incoming)
         {
+            lock (_sync)
+            {
             if (!_connected)
             {
                 return Reject(incoming, "disconnected");
@@ -307,7 +383,8 @@ namespace TradeCopia.Protocol
                     ProtocolMessageTypes.Heartbeat,
                     DateTime.UtcNow,
                     _sessionId,
-                    SnapshotJson()));
+                    SnapshotJsonLocked()));
+            }
         }
 
         private string? RejectEnableReason()

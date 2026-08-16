@@ -28,6 +28,10 @@ public class AccountAndGroupApiTests
         Assert.DoesNotContain("SIM-FOLLOWER-03", status);
         var journal = await client.GetStringAsync("/api/v1/journal/trades");
         Assert.DoesNotContain("SIM-LEADER-01", journal);
+        var live = await client.GetStringAsync("/api/v1/live/trades");
+        Assert.Equal("[]", live);
+        var liveDiv = await client.GetStringAsync("/api/v1/live/divergences");
+        Assert.Equal("[]", liveDiv);
     }
 
     [Fact]

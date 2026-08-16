@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using TradeCopia.Domain;
 using TradeCopia.Domain.Config;
 using TradeCopia.Domain.Engine;
 using TradeCopia.Domain.Events;
+using TradeCopia.Domain.Intents;
 using TradeCopia.Domain.Model;
 using TradeCopia.Domain.Origin;
 using TradeCopia.Domain.Time;
@@ -23,6 +25,7 @@ namespace TradeCopia.Native.Adapter
         private readonly INativeOrderExecutor _executor;
         private readonly GuardedNativeRuntime _guarded;
         private readonly CopyCoordinator _coordinator;
+        private readonly LiveCopyBook _live = new LiveCopyBook();
         private readonly object _copyGate = new object();
         private string _appliedConfigToken = string.Empty;
         private NamedPipeEngineHost? _pipe;
@@ -38,6 +41,15 @@ namespace TradeCopia.Native.Adapter
         }
 
         public EngineRuntime(string pipeName, INativeOrderExecutor inner, Func<AccountKey, TriState> classify)
+            : this(pipeName, inner, classify, null)
+        {
+        }
+
+        public EngineRuntime(
+            string pipeName,
+            INativeOrderExecutor inner,
+            Func<AccountKey, TriState> classify,
+            string? dataDirectory)
         {
             if (string.IsNullOrWhiteSpace(pipeName))
             {
@@ -48,7 +60,11 @@ namespace TradeCopia.Native.Adapter
             Session = new ProtocolSession();
             _executor = inner ?? throw new ArgumentException("Executor is required.", nameof(inner));
             _guarded = new GuardedNativeRuntime(inner, classify, () => Session.CopyingEnabled);
-            _coordinator = new CopyCoordinator(DisabledEmptyConfig(), new OriginRegistry(), new SystemClock());
+            var ledger = string.IsNullOrWhiteSpace(dataDirectory)
+                ? (ILeaderIdentityLedger)NullLedger.Instance
+                : new FileLeaderIdentityLedger(Path.Combine(dataDirectory, "seen-leader-orders.txt"));
+
+            _coordinator = new CopyCoordinator(DisabledEmptyConfig(), new OriginRegistry(), new SystemClock(), ledger);
         }
 
         public string PipeName { get; }
@@ -87,8 +103,41 @@ namespace TradeCopia.Native.Adapter
                     dispatched.Add(_guarded.Dispatch(result.Intents[i]));
                 }
 
+                PublishLive(evt, result);
                 return dispatched;
             }
+        }
+
+        private void PublishLive(NormalizedOrderEvent evt, CoordinatorResult result)
+        {
+            var copier = !string.IsNullOrEmpty(evt.OrderName)
+                && evt.OrderName.StartsWith("TC:", StringComparison.Ordinal);
+            _live.Observe(
+                evt.OrderKey.Value,
+                evt.AlternateOrderKey,
+                evt.Account.Value,
+                evt.Instrument.Value,
+                evt.Action.ToString(),
+                evt.OrderType.ToString(),
+                evt.Quantity,
+                evt.FilledQuantity,
+                evt.State.ToString(),
+                LiveCopyBook.FormatPrice(evt.LimitPrice),
+                LiveCopyBook.FormatPrice(evt.StopPrice),
+                evt.OrderName,
+                copier,
+                evt.ObservedAtUtc);
+
+            for (var i = 0; i < result.Intents.Count; i++)
+            {
+                var intent = result.Intents[i];
+                if (intent.Kind == IntentKind.RaiseDivergence)
+                {
+                    _live.AddDivergence(intent.ReasonCode, intent.ReasonCode);
+                }
+            }
+
+            Session.ReplaceLiveActivity(_live.Snapshot(), _live.DivergenceSnapshot());
         }
 
         public void Start()

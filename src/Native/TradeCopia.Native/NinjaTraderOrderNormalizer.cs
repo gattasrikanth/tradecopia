@@ -22,16 +22,27 @@ namespace TradeCopia.Native
                 return null;
             }
 
-            var orderKey = !string.IsNullOrWhiteSpace(order.OrderId)
-                ? order.OrderId
-                : order.Id.ToString();
+            var sessionId = order.Id.ToString();
+            var brokerId = order.OrderId ?? string.Empty;
+            var primary = !string.IsNullOrWhiteSpace(sessionId) && sessionId != "0"
+                ? sessionId
+                : brokerId;
+            if (string.IsNullOrWhiteSpace(primary))
+            {
+                return null;
+            }
+
+            var alternate = !string.IsNullOrWhiteSpace(brokerId)
+                && !string.Equals(brokerId, primary, StringComparison.Ordinal)
+                ? brokerId
+                : string.Empty;
 
             return new NormalizedOrderEvent(
                 EventId.New(),
                 DateTime.UtcNow,
                 DateTime.UtcNow.Ticks,
                 new AccountKey(key),
-                new LeaderOrderKey(orderKey),
+                new LeaderOrderKey(primary),
                 new InstrumentKey(instrumentName),
                 MapAction(order.OrderAction),
                 MapType(order.OrderType),
@@ -42,7 +53,8 @@ namespace TradeCopia.Native
                 order.StopPrice != 0 ? (decimal)order.StopPrice : (decimal?)null,
                 order.TimeInForce.ToString(),
                 order.Oco ?? string.Empty,
-                order.Name ?? string.Empty);
+                order.Name ?? string.Empty,
+                alternate);
         }
 
         internal static OrderActionKind MapAction(OrderAction action)

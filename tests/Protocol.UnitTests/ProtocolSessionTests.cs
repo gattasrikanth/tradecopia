@@ -12,6 +12,40 @@ namespace TradeCopia.Protocol.UnitTests
         }
 
         [Fact]
+        public void Snapshot_includes_live_trades_for_dashboard()
+        {
+            var session = new ProtocolSession();
+            session.Handle(Envelope(ProtocolMessageTypes.Hello));
+            session.ReplaceLiveActivity(
+                new[]
+                {
+                    new LiveCopyRecord(
+                        "t1",
+                        "MNQ 09-26",
+                        "Buy",
+                        "Limit",
+                        "Provider31|3",
+                        "12",
+                        1,
+                        1,
+                        "Filled",
+                        "30190",
+                        "",
+                        DateTime.UtcNow,
+                        new[] { new LiveFollowerRecord("Simulator|2", 1, 1, "Filled", "30190", "TC:abc") })
+                },
+                new[] { new LiveDivergenceRecord("ok", "none") });
+            var snap = session.Handle(Envelope(ProtocolMessageTypes.RequestSnapshot));
+            Assert.Contains("\"liveTrades\":", snap.Reply.PayloadJson);
+            var parsed = LiveCopyRecord.ParseArray(snap.Reply.PayloadJson);
+            Assert.Single(parsed);
+            Assert.Equal("MNQ 09-26", parsed[0].Instrument);
+            Assert.Single(parsed[0].Followers);
+            Assert.Equal("Simulator|2", parsed[0].Followers[0].Account);
+            Assert.Equal(1, parsed[0].Followers[0].Qty);
+        }
+
+        [Fact]
         public void Handshake_then_snapshot_reports_copying_disabled()
         {
             var session = new ProtocolSession();

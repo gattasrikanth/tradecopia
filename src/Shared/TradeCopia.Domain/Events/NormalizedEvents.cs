@@ -20,7 +20,8 @@ namespace TradeCopia.Domain.Events
             decimal? stopPrice,
             string timeInForce,
             string ocoIdentity,
-            string orderName)
+            string orderName,
+            string alternateOrderKey = "")
         {
             EventId = eventId;
             ObservedAtUtc = DateTime.SpecifyKind(observedAtUtc, DateTimeKind.Utc);
@@ -38,6 +39,7 @@ namespace TradeCopia.Domain.Events
             TimeInForce = timeInForce ?? string.Empty;
             OcoIdentity = ocoIdentity ?? string.Empty;
             OrderName = orderName ?? string.Empty;
+            AlternateOrderKey = alternateOrderKey ?? string.Empty;
         }
 
         public EventId EventId { get; }
@@ -56,6 +58,7 @@ namespace TradeCopia.Domain.Events
         public string TimeInForce { get; }
         public string OcoIdentity { get; }
         public string OrderName { get; }
+        public string AlternateOrderKey { get; }
 
         public int WorkingQuantity
         {

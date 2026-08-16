@@ -54,11 +54,12 @@ function table(headers, rows) {
 
 const pages = {
   async overview() {
-    const [status, groups, accounts, divergences] = await Promise.all([
+    const [status, groups, accounts, divergences, trades] = await Promise.all([
       api("/api/v1/system/status"),
       api("/api/v1/groups"),
       api("/api/v1/accounts"),
-      api("/api/v1/live/divergences")
+      api("/api/v1/live/divergences"),
+      api("/api/v1/live/trades")
     ]);
     var p = status.presentation || {};
     setPill(p.headline || (status.engineConnected ? "Engine Connected" : "Engine Disconnected"),
@@ -78,6 +79,7 @@ const pages = {
       card("Accounts", discovered.length + " discovered",
         eligible.length + " eligible non-live · " + blocked + " blocked/other") +
       card("Active groups", String(activeGroups.length)) +
+      card("Open copies", String((trades || []).length), lastCopyMeta(trades)) +
       card("Divergences", String((divergences || []).length)) +
       "</div>" +
       "<h3>First-trade preflight</h3>" +
@@ -115,10 +117,17 @@ const pages = {
     bindGroupCards(status);
   },
   async live() {
-    const trades = await api("/api/v1/live/trades");
-    render("Live Trades", table(["Trade", "Instrument", "Side", "Leader qty", "Followers"], trades.map((t) =>
-      "<tr><td>" + escapeHtml(t.logicalTradeId.slice(0, 8)) + "</td><td>" + escapeHtml(t.instrument) + "</td><td>" + escapeHtml(t.side) + "</td><td>" + t.leaderQty + "</td><td>" +
-      t.followers.map((f) => escapeHtml(visibleName(f.account)) + " " + f.qty + " @ " + f.fill).join("<br>") + "</td></tr>")));
+    const [trades, status] = await Promise.all([
+      api("/api/v1/live/trades"),
+      api("/api/v1/system/status")
+    ]);
+    var p = status.presentation || {};
+    setPill(p.headline || (status.engineConnected ? "Engine Connected" : "Engine Disconnected"),
+      status.copyingEnabled ? "ok" : (status.engineConnected ? "warn" : "bad"));
+    render("Live Trades",
+      "<p class=\"sub live-sync\">Leader and follower orders from the native copier. Updates about once a second. This page does not place orders.</p>" +
+      ((trades && trades.length) ? trades.slice().reverse().map(liveCard).join("") :
+        "<div class=\"empty\">No copied trades yet. Take a supported order on the leader account and it will appear here with the follower copy.</div>"));
   },
   async divergences() {
     const items = await api("/api/v1/live/divergences");
@@ -314,10 +323,74 @@ function openEnableModal(id, status) {
   };
 }
 
+function lastCopyMeta(trades) {
+  if (!trades || !trades.length) {
+    return "Waiting for a leader order";
+  }
+  var last = trades[trades.length - 1];
+  return visibleName(last.instrument) + " " + visibleName(last.side) + " " + last.leaderQty +
+    " → " + ((last.followers && last.followers.length) ? last.followers.length + " follower" : "no follower yet");
+}
+
+function priceBits(t) {
+  var bits = [];
+  if (t.orderType) {
+    bits.push(t.orderType);
+  }
+  if (t.limitPrice) {
+    bits.push("limit " + t.limitPrice);
+  }
+  if (t.stopPrice) {
+    bits.push("stop " + t.stopPrice);
+  }
+  return bits.join(" · ");
+}
+
+function liveCard(t) {
+  var followers = (t.followers || []).map((f) =>
+    "<div class=\"live-leg\">" +
+    "<div class=\"meta\">Follower</div>" +
+    "<p>" + escapeHtml(visibleName(f.account)) + "</p>" +
+    "<div class=\"meta\">" + escapeHtml(String(f.qty)) + " con · filled " + escapeHtml(String(f.filled)) +
+    " · " + escapeHtml(f.state || "submitted") +
+    (f.fill ? " · " + escapeHtml(f.fill) : "") + "</div></div>").join("");
+  return "<article class=\"card live-card\">" +
+    "<div class=\"live-flow\">" +
+    "<div class=\"live-leg\">" +
+    "<div class=\"meta\">Leader</div>" +
+    "<p>" + escapeHtml(visibleName(t.leaderAccount || "Leader")) + "</p>" +
+    "<div class=\"meta\">" + escapeHtml(String(t.leaderQty)) + " con · filled " + escapeHtml(String(t.leaderFilled)) +
+    " · " + escapeHtml(t.leaderState || "") + "</div></div>" +
+    "<div class=\"arrow\">1 : 1<br>↓</div>" +
+    "<div>" + (followers || "<div class=\"meta\">Follower copy pending</div>") + "</div>" +
+    "</div>" +
+    "<div class=\"meta\">" + escapeHtml(visibleName(t.instrument)) + " · " + escapeHtml(t.side || "") +
+    (priceBits(t) ? " · " + escapeHtml(priceBits(t)) : "") + "</div></article>";
+}
+
+let refreshTimer = null;
+function setRefresh(fn) {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+  if (fn) {
+    refreshTimer = setInterval(fn, 1000);
+  }
+}
+
 async function go(route) {
   state.route = route;
+  setRefresh(null);
   document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("active", b.dataset.route === route));
   await pages[route]();
+  if (route === "live" || route === "overview") {
+    setRefresh(function () {
+      if (state.route === route) {
+        pages[route]();
+      }
+    });
+  }
 }
 
 async function boot() {

@@ -31,6 +31,71 @@ namespace TradeCopia.Domain.UnitTests
         }
 
         [Fact]
+        public void Session_then_broker_identity_submits_one_contract()
+        {
+            var coordinator = Coordinator();
+            var first = coordinator.ProcessOrder(TestSupport.Order(
+                "12",
+                LeaderOrderState.PendingSubmission,
+                quantity: 1,
+                type: DomainOrderType.Limit,
+                limit: 30190m,
+                alternate: "542218035271"));
+            Assert.Equal(1, first.SubmitCount);
+            Assert.Equal(1, first.Intents[0].Quantity);
+
+            var second = coordinator.ProcessOrder(TestSupport.Order(
+                "542218035271",
+                LeaderOrderState.Working,
+                quantity: 1,
+                type: DomainOrderType.Limit,
+                limit: 30190m));
+            Assert.Equal(0, second.SubmitCount);
+        }
+
+        [Fact]
+        public void First_observation_of_fill_does_not_submit()
+        {
+            var coordinator = Coordinator();
+            var result = coordinator.ProcessOrder(TestSupport.Order("L9", LeaderOrderState.Filled, quantity: 1, filled: 1));
+            Assert.Equal(0, result.SubmitCount);
+        }
+
+        [Fact]
+        public void Ledger_blocks_replay_of_known_leader_order()
+        {
+            var ledger = new MemoryLedger();
+            ledger.Remember("L1");
+            var coordinator = new CopyCoordinator(
+                TestSupport.Config(),
+                new OriginRegistry(),
+                new FrozenClock(System.DateTime.UtcNow, 1),
+                ledger);
+            var result = coordinator.ProcessOrder(TestSupport.Order("L1", LeaderOrderState.Working));
+            Assert.Equal(0, result.SubmitCount);
+        }
+
+        [Fact]
+        public void Copier_named_fill_updates_follower_without_resubmit()
+        {
+            var coordinator = Coordinator();
+            var first = coordinator.ProcessOrder(TestSupport.Order("L1", LeaderOrderState.Working, quantity: 1));
+            Assert.Equal(1, first.SubmitCount);
+            var command = first.Intents[0].CommandId.Value.ToString("N");
+            var observe = coordinator.ProcessOrder(TestSupport.Order(
+                "f1",
+                LeaderOrderState.Filled,
+                quantity: 1,
+                filled: 1,
+                name: "TC:" + command,
+                account: TestSupport.Follower1));
+            Assert.Equal(0, observe.SubmitCount);
+            var link = System.Linq.Enumerable.Single(first.Orders[0].Links);
+            Assert.Equal(1, link.FilledQuantity);
+            Assert.Equal(FollowerLinkHealth.Filled, link.Health);
+        }
+
+        [Fact]
         public void Working_market_order_submits_once_per_follower()
         {
             var coordinator = Coordinator();
@@ -161,6 +226,21 @@ namespace TradeCopia.Domain.UnitTests
             var result = coordinator.ProcessOrder(TestSupport.Order("L1", LeaderOrderState.Working));
             Assert.Equal(0, result.SubmitCount);
             Assert.Contains(result.Intents, i => i.ReasonCode.Contains("SimulationRequired"));
+        }
+
+        private sealed class MemoryLedger : ILeaderIdentityLedger
+        {
+            private readonly System.Collections.Generic.HashSet<string> _seen = new(System.StringComparer.Ordinal);
+
+            public bool Contains(string identity) => !string.IsNullOrEmpty(identity) && _seen.Contains(identity);
+
+            public void Remember(string identity)
+            {
+                if (!string.IsNullOrEmpty(identity))
+                {
+                    _seen.Add(identity);
+                }
+            }
         }
     }
 }

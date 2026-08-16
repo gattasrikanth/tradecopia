@@ -52,15 +52,26 @@ namespace TradeCopia.Domain.Engine
     {
         private readonly IOriginRegistry _origins;
         private readonly IClock _clock;
+        private readonly ILeaderIdentityLedger _ledger;
         private readonly Dictionary<string, LogicalOrder> _orders = new Dictionary<string, LogicalOrder>(StringComparer.Ordinal);
         private readonly HashSet<string> _seenExecutions = new HashSet<string>(StringComparer.Ordinal);
         private ActiveConfigSnapshot _config;
 
         public CopyCoordinator(ActiveConfigSnapshot config, IOriginRegistry origins, IClock clock)
+            : this(config, origins, clock, NullLedger.Instance)
+        {
+        }
+
+        public CopyCoordinator(
+            ActiveConfigSnapshot config,
+            IOriginRegistry origins,
+            IClock clock,
+            ILeaderIdentityLedger ledger)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _origins = origins ?? throw new ArgumentNullException(nameof(origins));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _ledger = ledger ?? NullLedger.Instance;
         }
 
         public ActiveConfigSnapshot Config => _config;
@@ -113,6 +124,7 @@ namespace TradeCopia.Domain.Engine
             if (_origins.IsCopierOriginated(evt.Account, evt.OrderKey.Value)
                 || LooksLikeCopierName(evt.OrderName))
             {
+                ObserveFollowerUpdate(evt);
                 return Finish(evt, new CoordinatorResult(
                     new[] { ExecutionIntent.NoOp(evt.EventId, _clock.UtcNow, "loop-prevention") },
                     SnapshotOrders(),
@@ -120,10 +132,11 @@ namespace TradeCopia.Domain.Engine
             }
 
             var fingerprint = SemanticFingerprint.Compute(evt);
-            LogicalOrder existing;
-            if (_orders.TryGetValue(evt.OrderKey.Value, out existing)
+            var existing = FindExisting(evt);
+            if (existing != null
                 && string.Equals(existing.LastFingerprint, fingerprint, StringComparison.Ordinal))
             {
+                RememberAliases(evt, existing);
                 return new CoordinatorResult(
                     new[] { ExecutionIntent.NoOp(evt.EventId, _clock.UtcNow, "duplicate-fingerprint") },
                     SnapshotOrders(),
@@ -147,15 +160,26 @@ namespace TradeCopia.Domain.Engine
                     warnings);
             }
 
+            var replayKnown = existing == null && AlreadyCopied(evt);
             if (existing == null)
             {
                 existing = new LogicalOrder(LogicalOrderId.New(), group.Id, evt);
                 existing.Classification = Classify(evt);
-                _orders[evt.OrderKey.Value] = existing;
+                existing.LastLeaderState = evt.State;
+                IndexOrder(evt, existing);
+                if (replayKnown)
+                {
+                    existing.State = LogicalCopyState.Satisfied;
+                }
+            }
+            else
+            {
+                RememberAliases(evt, existing);
             }
 
             existing.LastFingerprint = fingerprint;
             existing.LastObservedAtUtc = evt.ObservedAtUtc;
+            existing.LastLeaderState = evt.State;
 
             if (evt.OrderType == DomainOrderType.Unsupported)
             {
@@ -165,13 +189,18 @@ namespace TradeCopia.Domain.Engine
                 return new CoordinatorResult(intents, SnapshotOrders(), warnings);
             }
 
-            if (IsNewWorkingOrPending(evt) && existing.Links.Count == 0)
+            if (!replayKnown && IsFreshEntryState(evt) && existing.Links.Count == 0)
             {
                 TryDispatchNew(evt, group, existing, intents, warnings);
             }
             else if (existing.Links.Count > 0)
             {
                 HandleLifecycle(evt, group, existing, intents, warnings);
+            }
+
+            if (existing.Links.Count > 0)
+            {
+                RememberCopied(evt);
             }
 
             ApplyObservedMutation(existing, evt);
@@ -533,14 +562,154 @@ namespace TradeCopia.Domain.Engine
         private static bool IsEligibleSubmissionState(LeaderOrderState state)
         {
             return state == LeaderOrderState.PendingSubmission
-                || state == LeaderOrderState.Working
-                || state == LeaderOrderState.PartiallyFilled
-                || state == LeaderOrderState.Filled;
+                || state == LeaderOrderState.Working;
         }
 
-        private static bool IsNewWorkingOrPending(NormalizedOrderEvent evt)
+        private static bool IsFreshEntryState(NormalizedOrderEvent evt)
         {
             return IsEligibleSubmissionState(evt.State);
+        }
+
+        private LogicalOrder? FindExisting(NormalizedOrderEvent evt)
+        {
+            LogicalOrder existing;
+            if (_orders.TryGetValue(evt.OrderKey.Value, out existing))
+            {
+                return existing;
+            }
+
+            if (!string.IsNullOrEmpty(evt.AlternateOrderKey)
+                && _orders.TryGetValue(evt.AlternateOrderKey, out existing))
+            {
+                return existing;
+            }
+
+            return FindTwin(evt);
+        }
+
+        private LogicalOrder? FindTwin(NormalizedOrderEvent evt)
+        {
+            foreach (var pair in _orders)
+            {
+                var order = pair.Value;
+                if (!order.LeaderAccount.Equals(evt.Account)
+                    || !order.Instrument.Equals(evt.Instrument)
+                    || order.Action != evt.Action
+                    || order.OrderType != evt.OrderType
+                    || order.RequestedQuantity != evt.Quantity
+                    || order.LimitPrice != evt.LimitPrice
+                    || order.StopPrice != evt.StopPrice
+                    || order.Links.Count == 0)
+                {
+                    continue;
+                }
+
+                var age = evt.ObservedAtUtc - order.LastObservedAtUtc;
+                if (age < TimeSpan.Zero)
+                {
+                    age = -age;
+                }
+
+                if (age.TotalSeconds > 5)
+                {
+                    continue;
+                }
+
+                if (IsSessionAndBrokerPair(evt.OrderKey.Value, pair.Key)
+                    || IsSessionAndBrokerPair(evt.OrderKey.Value, order.LeaderOrder.Value)
+                    || (!string.IsNullOrEmpty(evt.AlternateOrderKey)
+                        && (IsSessionAndBrokerPair(evt.AlternateOrderKey, pair.Key)
+                            || IsSessionAndBrokerPair(evt.OrderKey.Value, evt.AlternateOrderKey))))
+                {
+                    return order;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsSessionAndBrokerPair(string left, string right)
+        {
+            if (string.IsNullOrEmpty(left) || string.IsNullOrEmpty(right)
+                || string.Equals(left, right, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            int parsed;
+            return int.TryParse(left, out parsed) != int.TryParse(right, out parsed);
+        }
+
+        private void IndexOrder(NormalizedOrderEvent evt, LogicalOrder order)
+        {
+            _orders[evt.OrderKey.Value] = order;
+            RememberAliases(evt, order);
+        }
+
+        private void RememberAliases(NormalizedOrderEvent evt, LogicalOrder order)
+        {
+            if (!string.IsNullOrEmpty(evt.AlternateOrderKey))
+            {
+                _orders[evt.AlternateOrderKey] = order;
+            }
+        }
+
+        private bool AlreadyCopied(NormalizedOrderEvent evt)
+        {
+            return _ledger.Contains(evt.OrderKey.Value)
+                || (!string.IsNullOrEmpty(evt.AlternateOrderKey) && _ledger.Contains(evt.AlternateOrderKey));
+        }
+
+        private void RememberCopied(NormalizedOrderEvent evt)
+        {
+            _ledger.Remember(evt.OrderKey.Value);
+            if (!string.IsNullOrEmpty(evt.AlternateOrderKey))
+            {
+                _ledger.Remember(evt.AlternateOrderKey);
+            }
+        }
+
+        private void ObserveFollowerUpdate(NormalizedOrderEvent evt)
+        {
+            var name = evt.OrderName ?? string.Empty;
+            if (name.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var order in _orders.Values)
+            {
+                for (var i = 0; i < order.Links.Count; i++)
+                {
+                    var link = order.Links[i];
+                    if (!link.SubmitCommand.HasValue)
+                    {
+                        continue;
+                    }
+
+                    var token = link.SubmitCommand.Value.Value.ToString("N");
+                    if (name.IndexOf(token, StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    link.FilledQuantity = evt.FilledQuantity;
+                    if (evt.State == LeaderOrderState.Filled)
+                    {
+                        link.Health = FollowerLinkHealth.Filled;
+                    }
+                    else if (evt.State == LeaderOrderState.Canceled)
+                    {
+                        link.Health = FollowerLinkHealth.Canceled;
+                    }
+                    else if (evt.State == LeaderOrderState.Rejected)
+                    {
+                        link.Health = FollowerLinkHealth.Rejected;
+                    }
+
+                    return;
+                }
+            }
         }
 
         private static bool LooksLikeCopierName(string name)
@@ -607,7 +776,17 @@ namespace TradeCopia.Domain.Engine
 
         private IReadOnlyList<LogicalOrder> SnapshotOrders()
         {
-            return new List<LogicalOrder>(_orders.Values);
+            var unique = new List<LogicalOrder>();
+            var seen = new HashSet<LogicalOrder>();
+            foreach (var order in _orders.Values)
+            {
+                if (seen.Add(order))
+                {
+                    unique.Add(order);
+                }
+            }
+
+            return unique;
         }
     }
 }

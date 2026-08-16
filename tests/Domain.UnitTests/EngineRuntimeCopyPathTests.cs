@@ -54,6 +54,12 @@ namespace TradeCopia.Domain.UnitTests
             Assert.Equal(IntentKind.SubmitFollowerOrder, recorder.Last!.Kind);
             Assert.Equal("demo-1", recorder.Last.Follower!.Value.Value);
             Assert.Equal(1, recorder.Last.Quantity);
+            Assert.Contains("\"liveTrades\":", runtime.Session.SnapshotJson());
+            Assert.Contains("MNQ 09-26", runtime.Session.SnapshotJson());
+            var parsed = LiveCopyRecord.ParseArray(runtime.Session.SnapshotJson());
+            Assert.Single(parsed);
+            Assert.Equal("sim-1", parsed[0].LeaderAccount);
+            Assert.Equal(1, parsed[0].LeaderQty);
         }
 
         [Fact]
