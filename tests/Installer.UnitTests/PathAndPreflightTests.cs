@@ -16,10 +16,11 @@ public class PathAndPreflightTests
     [Fact]
     public void Resolver_uses_injected_documents_folder()
     {
-        var location = NinjaTraderPaths.Resolve(new FixedDocumentsFolder(@"C:\Users\example\Documents"));
-        Assert.Equal(@"C:\Users\example\Documents\NinjaTrader 8", location.UserDataPath);
+        var docs = Path.Combine("C:", "Users", "example", "Documents");
+        var location = NinjaTraderPaths.Resolve(new FixedDocumentsFolder(docs));
+        Assert.Equal(Path.Combine(docs, "NinjaTrader 8"), location.UserDataPath);
         Assert.False(location.CloudBacked);
-        Assert.EndsWith(@"bin\Custom", location.CustomPath);
+        Assert.Equal(Path.Combine(docs, "NinjaTrader 8", "bin", "Custom"), location.CustomPath);
     }
 
     [Fact]
