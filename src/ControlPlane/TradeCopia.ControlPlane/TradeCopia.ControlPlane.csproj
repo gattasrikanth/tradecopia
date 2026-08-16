@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TradeCopia.ControlPlane</RootNamespace>
+    <Description>Local loopback control plane. Never sits in the follower-order hot path.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\TradeCopia.Domain\TradeCopia.Domain.csproj" />
+    <ProjectReference Include="..\..\Shared\TradeCopia.Contracts\TradeCopia.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shared\TradeCopia.Protocol\TradeCopia.Protocol.csproj" />
+    <ProjectReference Include="..\TradeCopia.Persistence\TradeCopia.Persistence.csproj" />
+    <ProjectReference Include="..\TradeCopia.Analytics\TradeCopia.Analytics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TradeCopia.ControlPlane.UnitTests" />
+  </ItemGroup>
+
+</Project>

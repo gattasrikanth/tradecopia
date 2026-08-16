@@ -1,0 +1,46 @@
+:root {
+  --bg: #0b1020;
+  --panel: #141b2f;
+  --ink: #e8eefc;
+  --muted: #93a0bf;
+  --line: #243049;
+  --accent: #6ea8fe;
+  --warn: #f5c16c;
+  --bad: #ff7b7b;
+  --ok: #7ddea0;
+  --font: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); }
+#app { display: grid; grid-template-columns: 220px 1fr; min-height: 100%; }
+.nav { background: #0e1528; border-right: 1px solid var(--line); padding: 20px 14px; }
+.brand { font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
+.badge { color: var(--warn); font-size: 12px; margin: 0 0 18px; }
+.nav button {
+  display: block; width: 100%; text-align: left; background: transparent; color: var(--ink);
+  border: 0; border-radius: 8px; padding: 10px 12px; margin-bottom: 4px; cursor: pointer;
+}
+.nav button:hover, .nav button.active { background: #1b2540; }
+main { padding: 24px 28px 48px; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+h1 { margin: 0 0 6px; font-size: 28px; }
+.sub { margin: 0; color: var(--muted); }
+.pill { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 12px; }
+.pill.warn { color: var(--warn); border-color: #5a4a24; }
+.alerts { margin: 16px 0; }
+.card, table { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.card { padding: 16px; }
+.card h2, .card h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.card p { margin: 0; font-size: 20px; }
+table { width: 100%; border-collapse: collapse; overflow: hidden; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 14px; }
+th { color: var(--muted); font-weight: 600; }
+.warning { background: #2a2212; border: 1px solid #5a4a24; color: var(--warn); padding: 12px 14px; border-radius: 10px; }
+.critical { background: #2a1518; border: 1px solid #6a3030; color: var(--bad); padding: 12px 14px; border-radius: 10px; }
+button.action { background: #24345c; color: var(--ink); border: 1px solid #35508a; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+@media (max-width: 800px) {
+  #app { grid-template-columns: 1fr; }
+  .nav { display: flex; flex-wrap: wrap; gap: 6px; }
+  .nav button { width: auto; }
+}

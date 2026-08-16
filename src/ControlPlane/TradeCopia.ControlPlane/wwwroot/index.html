@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TradeCopia</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="nav">
+      <div class="brand">TradeCopia</div>
+      <p class="badge">Alpha · SIM only</p>
+      <button data-route="overview">Overview</button>
+      <button data-route="groups">Copy Groups</button>
+      <button data-route="live">Live Trades</button>
+      <button data-route="divergences">Divergences</button>
+      <button data-route="journal">Journal</button>
+      <button data-route="analytics">Analytics</button>
+      <button data-route="diagnostics">Diagnostics</button>
+      <button data-route="settings">Settings</button>
+    </aside>
+    <main>
+      <header class="top">
+        <div>
+          <h1 id="title">Overview</h1>
+          <p class="sub">Local control plane. Closing this browser does not stop copying.</p>
+        </div>
+        <div id="status-pill" class="pill warn">UNKNOWN</div>
+      </header>
+      <section id="alerts" class="alerts"></section>
+      <section id="content" class="content">Loading…</section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
