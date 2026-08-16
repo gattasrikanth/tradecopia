@@ -75,6 +75,6 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | A-03 | Draft → validate → activate → persist → non-live enable | DONE |
 | A-04 | Tests for classification, no-fixture, stale activate, fail-closed enable | DONE |
 | A-05 | `v0.1.0-alpha.5` pre-release + install that exact EXE | DONE |
-| A-06 | First-trade UX + `v0.1.0-alpha.6` pre-release + install | IN_PROGRESS |
+| A-06 | First-trade UX + `v0.1.0-alpha.6` pre-release + install | DONE |
 
 See `docs/architecture/SYSTEM-DESIGN.md` §55 Phases 3–14 and `docs/reports/2026-08-16-real-accounts-dashboard.md`.
