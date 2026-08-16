@@ -31,6 +31,7 @@ Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.1
 | `engineConnected` | false — NinjaTrader not restarted (do not start `NinjaTrader.exe` raw) |
 | POST pause without CSRF | 403 |
 | POST `/api/v1/orders` with CSRF | 404 `no-generic-order-entry` |
+| Companion restart | Stopped installed `TradeCopia.ControlPlane` (pid 29644); status became unreachable; Start Menu `Open TradeCopia.cmd` started launcher only; companion returned as pid 31224; `bindAddress=127.0.0.1`, `copyingEnabled=false` |
 
 ## Owner-only next step
 
