@@ -62,9 +62,7 @@ namespace TradeCopia.Domain.Origin
 
         public static string CorrelationMarker(CommandId commandId)
         {
-            var compact = commandId.Value.ToString("N");
-            var marker = "TC:" + compact;
-            return marker.Length <= 50 ? marker : marker.Substring(0, 50);
+            return "TC:" + commandId.Value.ToString("N");
         }
 
         private static string PendingKey(CommandId commandId) => commandId.Value.ToString("D");

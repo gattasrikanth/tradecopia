@@ -65,6 +65,8 @@ namespace TradeCopia.Domain.Engine
 
         public ActiveConfigSnapshot Config => _config;
 
+        public IReadOnlyList<LogicalOrder> ActiveOrders => SnapshotOrders();
+
         public void ReplaceConfig(ActiveConfigSnapshot config)
         {
             if (config == null)
@@ -81,16 +83,21 @@ namespace TradeCopia.Domain.Engine
             _config = config;
         }
 
-        public void ResetAfterEngineRestart()
+        public void DisableCopying()
         {
-            _orders.Clear();
-            _seenExecutions.Clear();
             _config = new ActiveConfigSnapshot(
                 _config.Version,
                 EngineSafetyState.Disabled,
                 _config.Risk,
                 _config.Groups,
                 _config.Accounts);
+        }
+
+        public void ResetAfterEngineRestart()
+        {
+            _orders.Clear();
+            _seenExecutions.Clear();
+            DisableCopying();
         }
 
         public CoordinatorResult ProcessOrder(NormalizedOrderEvent evt)
@@ -215,12 +222,6 @@ namespace TradeCopia.Domain.Engine
             {
                 logical.State = LogicalCopyState.Discovered;
                 warnings.Add("new-entries-blocked");
-                return;
-            }
-
-            if (evt.State == LeaderOrderState.Rejected || evt.State == LeaderOrderState.Canceled)
-            {
-                logical.State = evt.State == LeaderOrderState.Rejected ? LogicalCopyState.Failed : LogicalCopyState.Canceled;
                 return;
             }
 

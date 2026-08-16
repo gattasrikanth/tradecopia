@@ -32,14 +32,6 @@ namespace TradeCopia.Domain.Config
                 {
                     errors.Add("Group '" + group.Name + "' uses Execution Mirror, which is not enabled until Order Mirror is stable.");
                 }
-
-                foreach (var follower in group.Followers)
-                {
-                    if (follower.Sizing.Mode == SizingMode.Multiplier && follower.Sizing.Multiplier <= 0)
-                    {
-                        errors.Add("Follower '" + follower.Account.Value + "' has an invalid multiplier.");
-                    }
-                }
             }
 
             var topology = TopologyValidator.Validate(snapshot.Groups);
