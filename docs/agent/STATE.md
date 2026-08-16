@@ -1,8 +1,8 @@
 # Agent State
 
-Last updated: 2026-08-16T04:10:00Z
+Last updated: 2026-08-16T04:20:00Z
 Current branch: main
-HEAD: a75d49804e6ebdd1d402e906d1e29ed6d8d4aa89
+HEAD: d5dc41c
 Current phase: Phase 2
 Phase status: IN_PROGRESS
 
@@ -15,7 +15,8 @@ Phase status: IN_PROGRESS
 - Protocol length-prefixed framing.
 - Disabled native order executor + subscription registry (no submits).
 - FakeNinjaTrader broker harness.
-- Automated tests: 59 passing (domain 51, protocol 4, architecture 4).
+- Automated tests: 61 passing (domain 53, protocol 4, architecture 4).
+- Reconcile planner preview with stale hash/config/expiry protection (no auto-repair).
 - CI now restores/tests `TradeCopia.slnx`.
 
 ## Current invariants / locked decisions
