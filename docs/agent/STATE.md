@@ -9,8 +9,8 @@ Phase status: REAL_ACCOUNTS_ALPHA. Not Stable. Not live-certified.
 ## Completed
 
 - Customer install certified from GitHub Release `v0.1.0-alpha.1`.
-- Real-account discovery, official-metadata classification (ADR-0010), draft/validate/activate, and no-fixture APIs shipped as `v0.1.0-alpha.3`.
-- Published setup SHA-256: `57AD299B499765497182AA278445AECE81498203D8486CD45F18D2111AB0EF2B`.
+- Real-account discovery, official-metadata classification (ADR-0010), draft/validate/activate, and no-fixture APIs shipped as `v0.1.0-alpha.4`.
+- Published setup SHA-256: `CE88837513325FFE765CD50475E4DF1116E0832F937850BB94D98A5ED099951A`.
 - Start Menu launches installed single-file `TradeCopia.Launcher.exe`; companion starts; copying disabled; loopback only.
 
 ## Current invariants / locked decisions

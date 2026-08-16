@@ -3,14 +3,14 @@
 **Status language:** Alpha. Not Stable. Not live-certified. No live order and no autonomous SIM/demo trade was submitted.
 
 Repository: https://github.com/gattasrikanth/tradecopia  
-Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.3
+Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.4
 
 ## Artifact
 
-- File: `TradeCopia-Setup-0.1.0-alpha.3.exe`
-- SHA-256: `57AD299B499765497182AA278445AECE81498203D8486CD45F18D2111AB0EF2B`
-- Source: GitHub Release `v0.1.0-alpha.3` (that exact setup EXE is installed)
-- `v0.1.0-alpha.2` connected with an empty account list because the companion kept the first handshake snapshot. Alpha.3 refreshes snapshots while connected.
+- File: `TradeCopia-Setup-0.1.0-alpha.4.exe`
+- SHA-256: `CE88837513325FFE765CD50475E4DF1116E0832F937850BB94D98A5ED099951A`
+- Source: GitHub Release `v0.1.0-alpha.4` (that exact setup EXE is installed)
+- Alpha.2 kept the first empty snapshot. Alpha.3 refreshes snapshots. Alpha.4 classifies Tradovate demo from official `AccountType` (`Mode=Live` + `IsDemo=false` is not sufficient).
 - Native payload ships `TradeCopia.Native`, `TradeCopia.Native.Adapter`, `TradeCopia.Protocol`, `TradeCopia.Domain` (no NinjaTrader proprietary DLLs)
 
 ## What shipped
