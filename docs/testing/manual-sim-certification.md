@@ -6,11 +6,14 @@ The product owner should run this matrix on NinjaTrader 8 SIM accounts only.
 
 ## Preconditions
 
-- NinjaTrader 8 launched at least once
-- Two or more SIM accounts
-- TradeCopia AddOn loaded
-- Control plane running
-- Copying starts **disabled** until explicitly enabled
+- TradeCopia installed via `TradeCopia-Setup-*.exe` (no F5 / no DLL copy)
+- NinjaTrader 8 launched; AddOn loaded
+- Two or more **SIM** accounts (`Provider` = Simulator)
+- Control plane / Start Menu TradeCopia running
+- Dashboard: engine connected, copying **disabled**
+- NinjaTrader user-data is local (not OneDrive)
+
+Do not run this matrix on live accounts. The live-account negative test (S10) must not place an order.
 
 ## Scenarios
 

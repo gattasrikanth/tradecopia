@@ -9,13 +9,45 @@ permissions:
   contents: write
 
 jobs:
-  notes:
-    name: placeholder-release-notes
-    runs-on: ubuntu-latest
+  package:
+    name: windows-setup-prerelease
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Test shared solution
+        run: |
+          dotnet restore TradeCopia.slnx
+          dotnet test TradeCopia.slnx --nologo --no-restore
+      - name: Package setup (control plane + installer; native skipped if NT absent)
+        shell: pwsh
+        run: |
+          pwsh ./scripts/package.ps1
+          if (-not (Test-Path artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe.sha256)) {
+            throw 'checksum missing'
+          }
       - name: Refuse uncertified stable claims
         run: |
-          echo "Release workflow is a skeleton until packaging exists."
           echo "Any GitHub Release created from this repository must remain a prerelease"
           echo "until manual NinjaTrader SIM certification has passed."
+      - name: Upload setup artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tradecopia-setup
+          path: |
+            artifacts/package/TradeCopia-Setup-*.exe
+            artifacts/package/TradeCopia-Setup-*.exe.sha256
+            artifacts/package/README.txt
+      - name: Create GitHub pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" `
+            artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe `
+            artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe.sha256 `
+            artifacts/package/README.txt `
+            --prerelease `
+            --title "TradeCopia ${{ github.ref_name }} (Alpha)" `
+            --notes "Alpha / automated tests only. Not live-certified. Copying starts disabled. Unsigned SmartScreen warning is expected."

@@ -17,4 +17,6 @@ Formal ADRs live in `docs/adr/`. This file is the resume-friendly index.
 | D-010 | Event semantics: OrderUpdate intent, ExecutionUpdate fills | Locked | [ADR-0002](../adr/ADR-0002-event-semantics.md) |
 | D-011 | Native packaging uses local NT HintPaths, Private=false | Locked | [ADR-0005](../adr/ADR-0005-native-packaging.md) |
 | D-012 | Cloud-backed NT user-data is unsupported for normal install | Locked | Plan: `docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md` |
-| D-013 | Customer distribution is a versioned `TradeCopia-Setup-*.exe` | Locked | ADR-0007 to follow with technology choice |
+| D-013 | Customer distribution is a versioned `TradeCopia-Setup-*.exe` | Locked | [ADR-0007](../adr/ADR-0007-windows-installer.md) |
+| D-014 | Companion is a per-user process with a single-instance mutex | Locked | [ADR-0008](../adr/ADR-0008-companion-lifecycle.md) |
+| D-015 | SIM submit uses official NT `Provider` Simulator/Playback only | Locked | [ADR-0009](../adr/ADR-0009-simulation-provider-gate.md) |

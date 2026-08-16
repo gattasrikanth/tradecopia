@@ -52,14 +52,18 @@ See `docs/architecture/SYSTEM-DESIGN.md` for the locked design.
 | Browser dashboard | Local SPA at `http://127.0.0.1:17841` (live engine snapshot fields) |
 | Manual NT SIM certification | Not started |
 
-## Run the local dashboard
+## Install (Alpha)
+
+Download `TradeCopia-Setup-*.exe` from GitHub Releases. Close NinjaTrader, run setup, launch NinjaTrader, then open TradeCopia from the Start menu. Copying starts **disabled**. Do not install into an OneDrive-synchronized NinjaTrader Documents folder.
+
+Developer fallback:
 
 ```powershell
 pwsh ./scripts/test.ps1
 pwsh ./scripts/run-control-plane.ps1
 ```
 
-Then open `http://127.0.0.1:17841`. Copying starts **disabled**. There is no generic order-entry API.
+Then open `http://127.0.0.1:17841`. There is no generic order-entry API.
 
 ```powershell
 pwsh ./scripts/test-e2e.ps1   # Playwright against demo data

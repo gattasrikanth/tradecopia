@@ -1,20 +1,22 @@
 # Installation
 
-## Development
+## End users (Alpha)
 
-- Clone `https://github.com/gattasrikanth/tradecopia`
-- `pwsh ./scripts/bootstrap.ps1`
-- `pwsh ./scripts/test.ps1`
-- `pwsh ./scripts/run-control-plane.ps1`
+1. Download `TradeCopia-Setup-*.exe` and the `.sha256` file from GitHub Releases.
+2. Close NinjaTrader.
+3. Confirm NinjaTrader user-data is **not** under OneDrive (`docs/operations/onedrive-remediation.md`).
+4. Run the setup executable (per-user, no Administrator required).
+5. Launch NinjaTrader 8. TradeCopia should load without NinjaScript Editor / F5.
+6. Open TradeCopia from the Start menu. Copying starts **disabled**.
 
-Native compile (Windows, NinjaTrader installed):
+Do not enable copying on a live account. Unsigned Alpha may show SmartScreen; that is expected until signing is configured.
+
+## Developers
 
 ```powershell
-dotnet build src/Native/TradeCopia.Native/TradeCopia.Native.csproj
+pwsh ./scripts/bootstrap.ps1
+pwsh ./scripts/test.ps1
+pwsh ./scripts/package.ps1
 ```
 
-The project references local `NinjaTrader.*.dll` files with `Private=false`. Those assemblies are **not** committed.
-
-## End user (Alpha)
-
-Packaging is not live-certified. Run from source as above. A GitHub Release will be marked pre-release until the manual SIM matrix passes.
+`scripts/install-local.ps1` is a fallback diagnostic. It uses the Windows Documents known folder and blocks cloud-backed NinjaTrader trees.

@@ -12,7 +12,8 @@ namespace TradeCopia.Native.Adapter
     public sealed class EngineRuntime : IDisposable
     {
         private readonly SubscriptionRegistry _subscriptions = new SubscriptionRegistry();
-        private readonly DisabledOrderExecutor _executor = new DisabledOrderExecutor();
+        private readonly INativeOrderExecutor _executor;
+        private readonly GuardedNativeRuntime _guarded;
         private NamedPipeEngineHost? _pipe;
 
         public EngineRuntime()
@@ -21,6 +22,11 @@ namespace TradeCopia.Native.Adapter
         }
 
         public EngineRuntime(string pipeName)
+            : this(pipeName, new DisabledOrderExecutor(), key => TriState.Unknown)
+        {
+        }
+
+        public EngineRuntime(string pipeName, INativeOrderExecutor inner, Func<AccountKey, TriState> classify)
         {
             if (string.IsNullOrWhiteSpace(pipeName))
             {
@@ -29,6 +35,8 @@ namespace TradeCopia.Native.Adapter
 
             PipeName = pipeName;
             Session = new ProtocolSession();
+            _executor = inner ?? throw new ArgumentException("Executor is required.", nameof(inner));
+            _guarded = new GuardedNativeRuntime(inner, classify, () => Session.CopyingEnabled);
         }
 
         public string PipeName { get; }
@@ -41,6 +49,7 @@ namespace TradeCopia.Native.Adapter
 
         public SubscriptionRegistry Subscriptions => _subscriptions;
         public INativeOrderExecutor Executor => _executor;
+        public GuardedNativeRuntime Guarded => _guarded;
         public bool PipeStarted => _pipe != null;
 
         public void Start()

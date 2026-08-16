@@ -17,7 +17,8 @@ if (-not $Root) {
 }
 
 $excludeDirNames = @(
-    '.git', '.vs', 'bin', 'obj', 'node_modules', 'dist', 'build', '.turbo', 'coverage'
+    '.git', '.vs', 'bin', 'obj', 'node_modules', 'dist', 'build', '.turbo', 'coverage',
+    'artifacts', 'TestResults', 'test-results', 'playwright-report'
 )
 
 $binaryExtensions = @(

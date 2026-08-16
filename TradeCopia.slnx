@@ -8,10 +8,16 @@
   <Folder Name="/src/Native/">
     <Project Path="src/Native/TradeCopia.Native.Adapter/TradeCopia.Native.Adapter.csproj" />
   </Folder>
+  <Folder Name="/src/Installer/">
+    <Project Path="src/Installer/TradeCopia.Installer/TradeCopia.Installer.csproj" />
+    <Project Path="src/Installer/TradeCopia.Setup/TradeCopia.Setup.csproj" />
+    <Project Path="src/Installer/TradeCopia.Launcher/TradeCopia.Launcher.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/TradeCopia.Contracts/TradeCopia.Contracts.csproj" />
     <Project Path="src/Shared/TradeCopia.Domain/TradeCopia.Domain.csproj" />
     <Project Path="src/Shared/TradeCopia.Protocol/TradeCopia.Protocol.csproj" />
+    <Project Path="src/Shared/TradeCopia.Platform/TradeCopia.Platform.csproj" />
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/ArchitectureTests/">
@@ -22,6 +28,9 @@
   </Folder>
   <Folder Name="/tests/Domain.UnitTests/">
     <Project Path="tests/Domain.UnitTests/TradeCopia.Domain.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Installer.UnitTests/">
+    <Project Path="tests/Installer.UnitTests/TradeCopia.Installer.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Protocol.UnitTests/">
     <Project Path="tests/Protocol.UnitTests/TradeCopia.Protocol.UnitTests.csproj" />

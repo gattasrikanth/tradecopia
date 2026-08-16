@@ -18,6 +18,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     Args = args,
     WebRootPath = options.WebRoot
 });
+Mutex? singleInstance = null;
 if (string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
 {
     options = new ControlPlaneOptions
@@ -27,6 +28,15 @@ if (string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparis
         DataDirectory = Path.Combine(Path.GetTempPath(), "tradecopia-tests", Guid.NewGuid().ToString("N")),
         PipeName = TradeCopia.Protocol.EnginePipeName.FromMaterial("testing-" + Guid.NewGuid().ToString("N"))
     };
+}
+else
+{
+    singleInstance = new Mutex(true, @"Local\TradeCopia.ControlPlane.v1", out var createdNew);
+    if (!createdNew)
+    {
+        singleInstance.Dispose();
+        return;
+    }
 }
 
 if (!string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
@@ -111,6 +121,8 @@ api.MapPost("/groups/{groupId}/pause-new-entries", (string groupId, EngineLink e
     FailClosedCommand(engine, ProtocolMessageTypes.PauseNewEntries, groupId));
 api.MapPost("/groups/{groupId}/disable", (string groupId, EngineLink engine) =>
     FailClosedCommand(engine, ProtocolMessageTypes.DisableGroup, groupId));
+api.MapPost("/groups/{groupId}/resume-new-entries", (string groupId, EngineLink engine) =>
+    FailClosedCommand(engine, ProtocolMessageTypes.ResumeNewEntries, groupId));
 
 api.MapPost("/flatten/prepare", (ConfirmationStore confirmations) =>
 {
@@ -156,7 +168,14 @@ api.MapGet("/events/stream", async (HttpContext http, DemoCatalog demo, Cancella
 
 app.MapFallbackToFile("index.html");
 
-app.Run();
+try
+{
+    app.Run();
+}
+finally
+{
+    singleInstance?.Dispose();
+}
 
 static IResult FailClosedCommand(EngineLink engine, string messageType, string groupId)
 {

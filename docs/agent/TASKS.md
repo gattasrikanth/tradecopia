@@ -54,15 +54,15 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| I-A1 | Commit plan + agent state | IN_PROGRESS |
-| I-A2 | Machine inventory (redacted) | IN_PROGRESS |
-| I-B | Backup + migrate NT user-data off OneDrive | TODO |
-| I-C | Known-folder resolver + cloud-path policy | TODO |
-| I-D | Customer installer + companion lifecycle | TODO |
-| I-E | No-F5 native AddOn deployment | TODO |
+| I-A1 | Commit plan + agent state | DONE |
+| I-A2 | Machine inventory (redacted) | DONE |
+| I-B | Backup + migrate NT user-data off OneDrive | IN_PROGRESS |
+| I-C | Known-folder resolver + cloud-path policy | DONE |
+| I-D | Customer installer + companion lifecycle | DONE |
+| I-E | No-F5 native AddOn deployment | IN_PROGRESS |
 | I-H | Self-contained publish + GitHub pre-release | TODO |
-| I-I | Automated installer tests | TODO |
-| I-K | SIM-only native executor at execution boundary | TODO |
+| I-I | Automated installer tests | DONE |
+| I-K | SIM-only native executor at execution boundary | DONE |
 | I-J | Dogfood real TradeCopia-Setup-*.exe | TODO |
 | I-L | Docs + implementation report | TODO |
 
