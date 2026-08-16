@@ -43,6 +43,7 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 | ID | Task | Status |
 | --- | --- | --- |
 | P7-01 | Named-pipe protocol types | DONE |
+| P7-02 | OS named-pipe engine server + companion client | DONE |
 | P8-01 | Loopback control plane + security | DONE |
 | P8-02 | Demo API and journal/analytics read models | DONE |
 | P9-01 | Local dashboard SPA | DONE |

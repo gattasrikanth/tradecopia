@@ -5,73 +5,59 @@
 ## Commits
 
 - Starting `main` at goal resume: `eaa0ba190229f1e8ef38bf23860c39246ca8954c`
-- Final `main`: 80d4800949fce96e742d2f86b6344c739cdc650f
+- Feature tip (named-pipe + fail-closed pause/disable + domain coverage gate): `8b1d2938a86128bf1a99f2ca6f150eccce561f26`
+- `docs/agent/STATE.md` HEAD must match `origin/main` tip after the commit that updates this file.
 
 Repository: https://github.com/gattasrikanth/tradecopia
 
 ## Phases delivered
 
-- Domain copier brain (Order Mirror): loop prevention, fingerprint idempotency, star/forest topology, sizing, mapping, scale-out never reverses, reject/divergence visibility, stale reconcile rejection, restart leaves **Disabled**
-- SIM fail-closed executor: `SimulationGuardedExecutor` requires `TriState.KnownTrue`; name substrings are not used; default `DisabledOrderExecutor` never submits
-- IPC: length-prefixed frames + `ProtocolSession` handshake/reconnect; `ExecuteOrder` rejected; incompatible version fail-closed
-- Control plane: bind `127.0.0.1` only; Host/Origin/CSRF; no generic order-entry API
-- Dashboard/journal/analytics/diagnostics on demo synthetic IDs (`SIM-LEADER-01` …)
-- Playwright critical flow (load + CSRF + flatten prepare)
-- Packaging script `scripts/package.ps1` (no NT binaries)
+- Domain copier brain (Order Mirror) with loop prevention, fingerprint idempotency, topology, sizing, mapping, non-reversing scale-out, visible rejects, stale reconcile rejection, restart/disable
+- Domain coverlet **line 95.52% / branch 91.41%** (gates met). NT AddOn wrappers remain out of public CI only (`docs/development/coverage-exceptions.md`).
+- OS named-pipe transport: engine `NamedPipeEngineHost` (server), companion `NamedPipeCompanionClient` / `EngineLink` (client). Handshake + `ExecuteOrder` rejected.
+- Pause/disable **fail closed** with `503 engine-disconnected` when no pipe (does not return `accepted:true`).
+- SIM fail-closed executor; default `DisabledOrderExecutor`
+- Loopback control plane + dashboard; CSRF; no generic order-entry API
+- Playwright dashboard flow (synthetic)
 
-## Automated tests (local, two consecutive `pwsh ./scripts/test.ps1` runs)
+## Automated tests (two consecutive `pwsh ./scripts/test.ps1`)
 
 | Assembly | Passed |
 | --- | --- |
-| Protocol.UnitTests | 11 |
+| Protocol.UnitTests | 15 |
 | ArchitectureTests | 4 |
-| Domain.UnitTests | 78 |
-| ControlPlane.UnitTests | 8 |
-| **Total** | **101** |
+| Domain.UnitTests | 98 |
+| ControlPlane.UnitTests | 11 |
+| **Total** | **128** |
 
-Both runs: exit 0. Playwright `tests/Web/dashboard.spec.ts`: 1 passed.
+Both runs exit 0.
 
-## Coverage
+## Live control-plane probe (twice)
 
-Coverlet on Domain.UnitTests: **line 87.7% / branch 75.8%**. Below System Design 95/90. Exception documented in `docs/development/coverage-exceptions.md` (identifier boilerplate and rare branches; NT wrappers excluded from public CI). Safety paths (loop, topology, sizing, SIM fail-closed, stale reconcile) have direct tests.
+- bind `127.0.0.1`, `copyingEnabled: false`, `engineConnected: false`
+- POST pause without CSRF → 403
+- POST pause with CSRF, no engine → 503
+- POST `/api/v1/orders` with CSRF → 404
 
-## Security checks
+## Security
 
-- Loopback bind only; `0.0.0.0` rejected by `LoopbackGuard`
-- POST without CSRF → 403 (live probe + unit tests)
-- POST `/api/v1/orders` with CSRF → 404 `no-generic-order-entry`
-- `scan-secrets.ps1`: OK (156 files)
-- No `NinjaTrader*.dll` in git
-
-## Performance / latency
-
-In-process `LatencySample` on coordinator finish. No disk/HTTP/DB on the domain decision path. No public numeric latency claims.
+- `scan-secrets.ps1` OK (164 files)
+- No NinjaTrader DLLs in git
 
 ## CI
 
-`ci` workflow on `82729ce` (and prior `eaa0ba1`): **success**. CodeQL on the newest SHA may still be in-flight at report time.
+`ci` on `8b1d293`: success (see scratch `ci.txt`).
 
-## Packaging
-
-`scripts/package.ps1` publishes the control plane. Native AddOn compiles locally against NT 8.1.8.2 and is **not** redistributed.
-
-## Screenshots
-
-None. Playwright is the UI evidence. Optional polish screenshots deferred.
-
-## Known limitations / classification
+## Remaining (classified)
 
 | Item | Class |
 | --- | --- |
 | Manual NT SIM certification | Manual SIM item |
-| NT user-data directory missing | Genuine external blocker (install-local only) |
-| Public CI cannot compile NT AddOn | Genuine external blocker (cannot commit proprietary DLLs) |
-| Domain coverage < 95/90 | Approved documented exception (not a hidden defect) |
-| OS named-pipe transport vs in-process `ProtocolSession` | Remaining independent work / next NEXT.md item |
-| Live native Submit to NT SIM | Manual SIM item; implementation is fail-closed + disabled default |
+| NT user-data directory / public CI NT compile | Genuine external blocker |
+| Live NT Submit on SIM | Manual SIM item (implementation fail-closed + disabled default) |
 
 ## Confirmation
 
-- Completed work is pushed to `origin/main`
-- Product is **not** live-certified
-- Copying starts **disabled**
+- Completed work pushed to `origin/main`
+- Product is not live-certified
+- Copying starts disabled
