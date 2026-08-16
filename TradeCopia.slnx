@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Native/">
+    <Project Path="src/Native/TradeCopia.Native.Adapter/TradeCopia.Native.Adapter.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/TradeCopia.Contracts/TradeCopia.Contracts.csproj" />
+    <Project Path="src/Shared/TradeCopia.Domain/TradeCopia.Domain.csproj" />
+    <Project Path="src/Shared/TradeCopia.Protocol/TradeCopia.Protocol.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/ArchitectureTests/">
+    <Project Path="tests/ArchitectureTests/TradeCopia.ArchitectureTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Domain.UnitTests/">
+    <Project Path="tests/Domain.UnitTests/TradeCopia.Domain.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Protocol.UnitTests/">
+    <Project Path="tests/Protocol.UnitTests/TradeCopia.Protocol.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/" />
+  <Folder Name="/tools/FakeNinjaTrader/">
+    <Project Path="tools/FakeNinjaTrader/TradeCopia.FakeNinjaTrader.csproj" />
+  </Folder>
+</Solution>

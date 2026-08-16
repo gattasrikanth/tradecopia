@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>TradeCopia.Native</RootNamespace>
+    <Description>NinjaTrader 8 AddOn entry point. References local NT assemblies only; never copy them to output.</Description>
+    <NinjaTraderBin Condition="'$(NinjaTraderBin)' == ''">$(ProgramW6432)\NinjaTrader 8\bin</NinjaTraderBin>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\TradeCopia.Domain\TradeCopia.Domain.csproj" />
+    <ProjectReference Include="..\TradeCopia.Native.Adapter\TradeCopia.Native.Adapter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="NinjaTrader.Core">
+      <HintPath>$(NinjaTraderBin)\NinjaTrader.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="NinjaTrader.Gui">
+      <HintPath>$(NinjaTraderBin)\NinjaTrader.Gui.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>TradeCopia.Native.Adapter</RootNamespace>
+    <Description>NinjaTrader-facing contracts and a disabled order executor. No proprietary NT references.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\TradeCopia.Domain\TradeCopia.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

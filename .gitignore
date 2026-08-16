@@ -13,6 +13,7 @@ dist/
 build/
 out/
 artifacts/
+TestResults/
 *.dll
 *.exe
 *.pdb

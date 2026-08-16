@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>TradeCopia.FakeNinjaTrader</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\TradeCopia.Domain\TradeCopia.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Native\TradeCopia.Native.Adapter\TradeCopia.Native.Adapter.csproj" />
+  </ItemGroup>
+
+</Project>
