@@ -3,13 +3,14 @@
 **Status language:** Alpha. Not Stable. Not live-certified. No live order and no autonomous SIM/demo trade was submitted.
 
 Repository: https://github.com/gattasrikanth/tradecopia  
-Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.2
+Release: https://github.com/gattasrikanth/tradecopia/releases/tag/v0.1.0-alpha.3
 
 ## Artifact
 
-- File: `TradeCopia-Setup-0.1.0-alpha.2.exe`
-- SHA-256: `FD10D4F4AE65981CC97439C4A0DC80647BBB1EBD82EB03BB24EA614FFAB43A73`
-- Source: GitHub Release `v0.1.0-alpha.2` (that exact setup EXE is installed)
+- File: `TradeCopia-Setup-0.1.0-alpha.3.exe`
+- SHA-256: `57AD299B499765497182AA278445AECE81498203D8486CD45F18D2111AB0EF2B`
+- Source: GitHub Release `v0.1.0-alpha.3` (that exact setup EXE is installed)
+- `v0.1.0-alpha.2` connected with an empty account list because the companion kept the first handshake snapshot. Alpha.3 refreshes snapshots while connected.
 - Native payload ships `TradeCopia.Native`, `TradeCopia.Native.Adapter`, `TradeCopia.Protocol`, `TradeCopia.Domain` (no NinjaTrader proprietary DLLs)
 
 ## What shipped
