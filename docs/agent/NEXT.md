@@ -1,8 +1,8 @@
 # Next actions
 
-1. Write Phase 1 ADRs: event semantics, shared TFM, IPC ownership, native packaging, control-plane runtime.
-2. Create `src/Native` projects targeting .NET Framework 4.8 with a no-order-submit adapter facade.
-3. Run `scripts/verify-ninjatrader.ps1` and attempt a local native compile without committing NT binaries.
-4. If native compile is blocked, mark it in BLOCKERS and start Phase 2 (shared domain + FakeNinjaTrader).
-5. Implement domain identifiers, sizing, topology validation, and state machines with tests.
-6. Push each completed slice; keep `main` green.
+1. Add more domain scenario tests (stop/limit/MIT, multi-group, instrument mapping, dry-run) to raise coverage toward the 95/90 gate.
+2. Extract a documented transition-matrix table into `docs/architecture/order-state-machine.md`.
+3. Add a reconcile-planner skeleton that never auto-repairs.
+4. Compile native AddOn when the net48 targeting pack is visible; keep NT binaries uncommitted.
+5. After Phase 2 acceptance, start Phase 3 SIM market-order adapter behind the disabled executor + SIM guard.
+6. Keep pushing each completed slice to `main`.

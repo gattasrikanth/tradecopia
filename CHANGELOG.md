@@ -14,3 +14,8 @@ first numbered release exists.
 - Apache-2.0 license and open-source governance files.
 - Agent continuity files and resume script.
 - Baseline GitHub Actions, Dependabot, and CodeQL configuration.
+- Phase 1 ADRs for naming, event semantics, TFMs, IPC, packaging, and control plane.
+- Deterministic domain copy coordinator, sizing, topology validation, and origin registry.
+- Length-prefixed IPC framing types.
+- Disabled native order executor (no submission).
+- FakeNinjaTrader harness and 59 automated tests.

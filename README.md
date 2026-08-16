@@ -45,9 +45,9 @@ See `docs/architecture/SYSTEM-DESIGN.md` for the locked design.
 
 | Area | Status |
 | --- | --- |
-| Repository / governance | In progress |
-| Shared domain / fake engine | Not started |
-| Native NinjaTrader AddOn | Not started |
+| Repository / governance | Done (Phase 0) |
+| Shared domain / fake engine | In progress (Phase 2; tests green) |
+| Native NinjaTrader AddOn | Facade only; net48 compile pending |
 | Local control plane | Not started |
 | Browser dashboard | Not started |
 | Manual NT SIM certification | Not started |

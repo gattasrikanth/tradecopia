@@ -1,44 +1,43 @@
 # Agent State
 
-Last updated: 2026-08-16T03:30:00Z
+Last updated: 2026-08-16T04:10:00Z
 Current branch: main
-HEAD: (see latest commit on origin/main)
-Current phase: Phase 0
-Phase status: COMPLETE
+HEAD: (update after push)
+Current phase: Phase 2
+Phase status: IN_PROGRESS
 
 ## Completed
 
-- Created public GitHub repository `gattasrikanth/tradecopia`.
-- Default branch `main` exists remotely.
-- Copied PRD, System Design, and Autonomous Build Mandate into `docs/`.
-- Apache-2.0 license, governance docs, AGENTS.md, changelog, third-party notices.
-- Agent continuity files, resume script, secret scan, NT verify script.
-- Repository layout skeleton (`src/`, `tests/`, `tools/`, `docs/`, `installer/`, `demo/`).
-- Baseline GitHub Actions, Dependabot, CodeQL, issue/PR templates.
-- ADR-0001: product name TradeCopia, Apache-2.0.
-- .NET 10 SDK 10.0.400 installed on the build machine.
-- NinjaTrader Desktop 8.1.8.2 present (proprietary assemblies not committed).
+- Phase 0 repository/governance (public `gattasrikanth/tradecopia`, Apache-2.0).
+- Phase 1 ADRs 0001–0006 (name/license, events, TFM, IPC, packaging, control plane).
+- Official NT 8 API notes; Desktop 8.1.8.2 detected locally.
+- Shared domain: identifiers, config, sizing, topology, fingerprints, origin registry, copy coordinator.
+- Protocol length-prefixed framing.
+- Disabled native order executor + subscription registry (no submits).
+- FakeNinjaTrader broker harness.
+- Automated tests: 59 passing (domain 51, protocol 4, architecture 4).
+- CI now restores/tests `TradeCopia.slnx`.
 
 ## Current invariants / locked decisions
 
-- Product name: TradeCopia.
-- License: Apache-2.0.
-- Namespaces: `TradeCopia.*`.
-- Local-only; no SaaS/telemetry.
-- Copying starts disabled.
-- Browser is control plane only; no generic order-entry API.
-- Native engine is the only order-submission component.
-- Public fixtures use synthetic accounts only (`SIM-LEADER-01`, etc.).
-- Do not commit NinjaTrader proprietary assemblies.
+- Product name TradeCopia; license Apache-2.0; namespaces `TradeCopia.*`.
+- Copying starts disabled. Browser is not in the hot path.
+- OrderUpdate = intent; ExecutionUpdate = fills; PositionUpdate = reconcile only.
+- V1 topology is a strict star/forest (no leader also a follower).
+- Risk caps block rather than clamp.
+- No generic order-entry API.
 
 ## Tests last run
 
-- `pwsh ./scripts/scan-secrets.ps1` — OK (72 files)
-- PowerShell parse of `scripts/*.ps1` — OK
+- `dotnet test TradeCopia.slnx` — 59 passed, 0 failed
+- `pwsh ./scripts/scan-secrets.ps1` — OK (110 files)
+- `pwsh ./scripts/verify-ninjatrader.ps1` — NT 8.1.8.2 present; user-data dir missing
+- Domain coverage snapshot ~70% line / ~59% branch (below 95/90 gate; more tests required)
 
 ## Known blockers
 
-- See `docs/agent/BLOCKERS.md`. Native user-data directory still missing. Public CI cannot compile NT adapter (by design).
+- Native `net48` AddOn compile: targeting pack install attempted (4.8.1); reference assemblies path still not visible to this session. Public CI will not compile NT adapter (by design).
+- NT user-data directory missing until NinjaTrader is launched once.
 
 ## Active subagents/worktrees
 
@@ -46,6 +45,7 @@ Phase status: COMPLETE
 
 ## Next exact action
 
-- Start Phase 1: ADRs + native AddOn project targeting net48 with no-order-submit adapter facade.
-- Record detected NT version in architecture notes without committing machine-specific user paths.
-- If native compile is blocked, continue Phase 2 domain immediately.
+- Raise domain coverage toward 95/90 with more state-machine/scenario tests.
+- Add remaining Phase 2 pieces: explicit transition matrix docs, instrument mapping tests, reconcile planner skeleton.
+- When net48 targeting pack is visible, compile `src/Native/TradeCopia.Native` against local NT refs without copying DLLs.
+- Do not start browser work until domain/protocol are stable.

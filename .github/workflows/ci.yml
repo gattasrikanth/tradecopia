@@ -43,11 +43,18 @@ jobs:
           }
           if ($errors) { exit 1 }
 
-  placeholder-build:
-    name: no-source-yet
+  dotnet:
+    name: shared-dotnet
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore and test
+        run: |
+          dotnet restore TradeCopia.slnx
+          dotnet test TradeCopia.slnx --nologo --no-restore
       - name: Confirm required docs exist
         run: |
           test -f docs/product/PRD.md

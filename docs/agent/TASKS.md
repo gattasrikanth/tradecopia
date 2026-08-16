@@ -23,20 +23,20 @@ Status values: `TODO` | `IN_PROGRESS` | `DONE` | `BLOCKED`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| P1-01 | Locate NT install and record version (no sensitive paths committed) | TODO |
-| P1-02 | Native AddOn project targeting .NET Framework 4.8 | TODO |
-| P1-03 | No-order-submit adapter facade | TODO |
-| P1-04 | ADRs: events, shared TFM, IPC, packaging, control-plane runtime | TODO |
+| P1-01 | Locate NT install and record version (no sensitive paths committed) | DONE |
+| P1-02 | Native AddOn project targeting .NET Framework 4.8 | BLOCKED |
+| P1-03 | No-order-submit adapter facade | DONE |
+| P1-04 | ADRs: events, shared TFM, IPC, packaging, control-plane runtime | DONE |
 
 ## Phase 2 — Shared domain, state machines, fake engine
 
 | ID | Task | Status |
 | --- | --- | --- |
-| P2-01 | Domain / contracts / protocol projects | TODO |
-| P2-02 | Identifiers, events, config, sizing, topology | TODO |
-| P2-03 | State machines and execution intents | TODO |
-| P2-04 | Fake NinjaTrader adapter + fixtures | TODO |
-| P2-05 | Unit / property / architecture tests | TODO |
+| P2-01 | Domain / contracts / protocol projects | DONE |
+| P2-02 | Identifiers, events, config, sizing, topology | DONE |
+| P2-03 | State machines and execution intents | IN_PROGRESS |
+| P2-04 | Fake NinjaTrader adapter + fixtures | DONE |
+| P2-05 | Unit / property / architecture tests | IN_PROGRESS |
 
 ## Later phases
 
