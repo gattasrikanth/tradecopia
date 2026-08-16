@@ -1413,15 +1413,15 @@ A legitimate completion state should include, where the environment permits:
 - [x] live/unknown account negative protections tested;
 - [x] automated tests and coverage green;
 - [x] installer tests green;
-- [ ] CI green;
+- [x] CI green;
 - [x] setup artifact checksummed;
-- [ ] GitHub pre-release created if release gates permit;
+- [x] GitHub pre-release created if release gates permit;
 - [x] exact artifact installed on development PC;
 - [x] customer installation docs complete;
 - [x] manual SIM checklist simplified;
-- [ ] all completed code/docs pushed;
-- [ ] `main` green;
-- [ ] working tree clean.
+- [x] all completed code/docs pushed;
+- [x] `main` green;
+- [x] working tree clean.
 
 If one human interaction is required, document the exact step and continue every independent task that does not depend on it.
 

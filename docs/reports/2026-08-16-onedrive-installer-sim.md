@@ -9,7 +9,8 @@ Repository: https://github.com/gattasrikanth/tradecopia
 - Plan committed: `ea8ded0`
 - Installer / SIM gate: `4014a65`
 - Parent before this report slice: `ea3dc62`
-- This report describes the commit that lands with it on `main`. Read the SHA from git.
+- Report + payload embed: `0c783de`
+- Linux CI path-test fix / `origin/main` tip at verification: `727aaae`
 
 ## OneDrive / Documents
 
