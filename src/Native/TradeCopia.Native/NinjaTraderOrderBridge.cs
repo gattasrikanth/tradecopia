@@ -35,7 +35,7 @@ namespace TradeCopia.Native
                 return NativeExecutionResult.Blocked("follower-account-not-found");
             }
 
-            var classification = AccountSimulationGate.ClassifyProvider(account.Provider.ToString());
+            var classification = ClassifyAccount(account);
             if (!AccountSimulationGate.AllowsNativeSubmit(classification))
             {
                 return NativeExecutionResult.Blocked("simulation-not-positive:" + classification);
@@ -120,12 +120,41 @@ namespace TradeCopia.Native
                 return TriState.Unknown;
             }
 
-            return AccountSimulationGate.ClassifyProvider(account.Provider.ToString());
+            return ClassifyAccount(account);
         }
 
-        private static Account? FindAccount(string name)
+        internal static TriState ClassifyAccount(Account account)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            var provider = account.Provider.ToString();
+            var mode = string.Empty;
+            var isDemo = false;
+            var officialAccountType = string.Empty;
+            try
+            {
+                var connection = account.Connection;
+                if (connection != null && connection.Options != null)
+                {
+                    var options = connection.Options;
+                    isDemo = options.IsDemo;
+                    mode = options.Mode.ToString();
+                    var accountType = options.GetType().GetProperty("AccountType");
+                    if (accountType != null)
+                    {
+                        var value = accountType.GetValue(options, null);
+                        officialAccountType = value != null ? value.ToString() : string.Empty;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return AccountSimulationGate.ClassifyOfficial(provider, mode, isDemo, officialAccountType);
+        }
+
+        internal static Account? FindAccount(string requested)
+        {
+            if (string.IsNullOrWhiteSpace(requested))
             {
                 return null;
             }
@@ -134,9 +163,17 @@ namespace TradeCopia.Native
             {
                 foreach (Account account in Account.All)
                 {
-                    if (account != null
-                        && (string.Equals(account.Name, name, StringComparison.Ordinal)
-                            || string.Equals(account.DisplayName, name, StringComparison.Ordinal)))
+                    if (account == null)
+                    {
+                        continue;
+                    }
+
+                    if (NativeAccountIdentity.Matches(
+                        requested,
+                        account.Provider.ToString(),
+                        account.Id.ToString(),
+                        account.Name ?? string.Empty,
+                        account.DisplayName ?? string.Empty))
                     {
                         return account;
                     }

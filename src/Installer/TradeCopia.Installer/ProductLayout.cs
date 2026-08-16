@@ -3,7 +3,7 @@ namespace TradeCopia.Installer;
 public static class ProductInfo
 {
     public const string ProductName = "TradeCopia";
-    public const string Version = "0.1.0-alpha.4";
+    public const string Version = "0.1.0-alpha.5";
     public const string SetupFileName = "TradeCopia-Setup-" + Version + ".exe";
     public const string CompanionExe = "TradeCopia.ControlPlane.exe";
     public const string LauncherExe = "TradeCopia.Launcher.exe";

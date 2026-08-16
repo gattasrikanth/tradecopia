@@ -60,7 +60,9 @@ const pages = {
       "</td><td>" + g.status + "</td><td>" + g.version +
       "</td><td><button data-act=\"validate\" data-id=\"" + g.id + "\">Validate</button> " +
       "<button data-act=\"activate\" data-id=\"" + g.id + "\" data-ver=\"" + g.version + "\">Activate</button> " +
-      "<button data-act=\"enable\" data-id=\"" + g.id + "\">Enable non-live</button></td></tr>");
+      "<button data-act=\"enable\" data-id=\"" + g.id + "\">Enable non-live</button> " +
+      "<button data-act=\"pause-new-entries\" data-id=\"" + g.id + "\">Pause new entries</button> " +
+      "<button data-act=\"disable\" data-id=\"" + g.id + "\">Disable</button></td></tr>");
     const accountOpts = selectable.map((a) => "<option value=\"" + a.stableKey + "\">" + a.displayName + " (" + a.safetyClass + ")</option>").join("");
     const followerBoxes = selectable.map((a) =>
       "<label><input type=\"checkbox\" name=\"follower\" value=\"" + a.stableKey + "\"> " + a.displayName + " (" + a.safetyClass + ")</label><br>").join("");

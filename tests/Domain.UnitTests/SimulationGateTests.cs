@@ -19,6 +19,21 @@ namespace TradeCopia.Domain.UnitTests
         }
 
         [Fact]
+        public void Adr0010_demo_paper_may_submit_live_may_not()
+        {
+            Assert.True(AccountSimulationGate.AllowsNativeSubmit(TradeCopia.Domain.Safety.AccountSafetyClass.DemoPaper));
+            Assert.True(AccountSimulationGate.AllowsNativeSubmit(TradeCopia.Domain.Safety.AccountSafetyClass.Simulation));
+            Assert.False(AccountSimulationGate.AllowsNativeSubmit(TradeCopia.Domain.Safety.AccountSafetyClass.Live));
+            Assert.False(AccountSimulationGate.AllowsNativeSubmit(TradeCopia.Domain.Safety.AccountSafetyClass.Unknown));
+            Assert.Equal(
+                TriState.KnownTrue,
+                AccountSimulationGate.ClassifyOfficial("Provider31", "Live", false, "Simulation"));
+            Assert.Equal(
+                TriState.KnownFalse,
+                AccountSimulationGate.ClassifyOfficial("Provider31", "Live", false, "Live"));
+        }
+
+        [Fact]
         public void Spoofed_sim_account_name_does_not_pass_live_provider()
         {
             Assert.Equal(TriState.KnownFalse, AccountSimulationGate.ClassifyProvider("InteractiveBrokers"));

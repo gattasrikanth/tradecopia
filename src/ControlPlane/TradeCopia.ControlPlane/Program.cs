@@ -89,7 +89,7 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, EngineLink engine) =>
             telemetry = "none"
         }
     }));
-api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.4", commit = "local" }));
+api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha.5", commit = "local" }));
 api.MapGet("/system/health", () => Results.Json(new { status = "ok", copying = "disabled" }));
 api.MapGet("/system/capabilities", () => Results.Json(new
 {

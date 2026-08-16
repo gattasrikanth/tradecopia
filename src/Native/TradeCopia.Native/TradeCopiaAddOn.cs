@@ -24,12 +24,15 @@ namespace NinjaTrader.NinjaScript.AddOns
                 Description = "Local-first TradeCopia engine host. Copying starts disabled.";
                 _host.Start();
                 PublishAccounts();
+                SubscribeOrderUpdates();
                 Account.AccountStatusUpdate += OnAccountStatusUpdate;
                 _host.Subscriptions.Register("static:AccountStatusUpdate");
+                _host.Subscriptions.Register("instance:OrderUpdate");
             }
             else if (State == State.Terminated)
             {
                 Account.AccountStatusUpdate -= OnAccountStatusUpdate;
+                UnsubscribeOrderUpdates();
                 _host.Stop();
             }
         }
@@ -42,6 +45,57 @@ namespace NinjaTrader.NinjaScript.AddOns
             }
 
             PublishAccounts();
+            SubscribeOrderUpdates();
+        }
+
+        private void SubscribeOrderUpdates()
+        {
+            lock (Account.All)
+            {
+                foreach (Account account in Account.All)
+                {
+                    if (account == null)
+                    {
+                        continue;
+                    }
+
+                    account.OrderUpdate -= OnOrderUpdate;
+                    account.OrderUpdate += OnOrderUpdate;
+                }
+            }
+        }
+
+        private void UnsubscribeOrderUpdates()
+        {
+            lock (Account.All)
+            {
+                foreach (Account account in Account.All)
+                {
+                    if (account == null)
+                    {
+                        continue;
+                    }
+
+                    account.OrderUpdate -= OnOrderUpdate;
+                }
+            }
+        }
+
+        private void OnOrderUpdate(object sender, OrderEventArgs args)
+        {
+            if (args == null || args.Order == null)
+            {
+                return;
+            }
+
+            var account = sender as Account ?? args.Order.Account;
+            var evt = TradeCopia.Native.NinjaTraderOrderNormalizer.Capture(account, args.Order);
+            if (evt == null)
+            {
+                return;
+            }
+
+            _host.HandleOrder(evt);
         }
 
         private void PublishAccounts()

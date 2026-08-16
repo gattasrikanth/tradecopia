@@ -43,5 +43,5 @@ No display-name substring is used for classification.
 ## Consequences
 
 - Browser classification is informational.
-- Native submit still requires Simulation/Demo-Paper via this classifier plus the existing submit gate.
+- Native submit still requires Simulation/Demo-Paper via this classifier plus the existing submit gate (`AccountSimulationGate.ClassifyOfficial` / `ClassifySafety`). Provider-only Simulator/Playback remains sufficient; verified Tradovate `AccountType=Simulation` is also submit-positive. Live stays blocked.
 - Installed runtime account lists come from the engine snapshot, never from `DemoCatalog` fixtures.

@@ -43,6 +43,11 @@ namespace TradeCopia.Native
             _runtime.PublishAccounts(accounts);
         }
 
+        public IReadOnlyList<Adapter.NativeExecutionResult> HandleOrder(TradeCopia.Domain.Events.NormalizedOrderEvent evt)
+        {
+            return _runtime.HandleOrder(evt);
+        }
+
         public void Start()
         {
             _runtime.Start();

@@ -110,6 +110,8 @@ namespace TradeCopia.Protocol
         private bool _copyingEnabled;
         private readonly List<EngineAccountRecord> _accounts = new List<EngineAccountRecord>();
         private readonly HashSet<string> _activeAccountKeys = new HashSet<string>(StringComparer.Ordinal);
+        private string _leaderKey = string.Empty;
+        private readonly List<string> _followerKeys = new List<string>();
         private string _activeConfigVersion = string.Empty;
 
         public ProtocolSession()
@@ -124,6 +126,8 @@ namespace TradeCopia.Protocol
         public bool CopyingEnabled => _copyingEnabled;
         public IReadOnlyList<EngineAccountRecord> Accounts => _accounts;
         public string ActiveConfigVersion => _activeConfigVersion;
+        public string ActiveLeaderKey => _leaderKey;
+        public IReadOnlyList<string> ActiveFollowerKeys => _followerKeys;
 
         public void ReplaceAccounts(IEnumerable<EngineAccountRecord> accounts)
         {
@@ -256,21 +260,35 @@ namespace TradeCopia.Protocol
             if (string.Equals(incoming.MessageType, ProtocolMessageTypes.ActivateConfig, StringComparison.Ordinal))
             {
                 _activeAccountKeys.Clear();
+                _leaderKey = string.Empty;
+                _followerKeys.Clear();
+                var ordered = new List<string>();
                 foreach (var key in ExtractActiveKeys(incoming.PayloadJson))
                 {
-                    _activeAccountKeys.Add(key);
+                    if (_activeAccountKeys.Add(key))
+                    {
+                        ordered.Add(key);
+                    }
                 }
 
-                if (_activeAccountKeys.Count < 2)
+                if (ordered.Count < 2)
                 {
                     _activeAccountKeys.Clear();
                     return Reject(incoming, "leader-and-follower-required");
+                }
+
+                _leaderKey = ordered[0];
+                for (var i = 1; i < ordered.Count; i++)
+                {
+                    _followerKeys.Add(ordered[i]);
                 }
 
                 var activateBlock = RejectEnableReason();
                 if (activateBlock != null)
                 {
                     _activeAccountKeys.Clear();
+                    _leaderKey = string.Empty;
+                    _followerKeys.Clear();
                     return Reject(incoming, activateBlock);
                 }
 
