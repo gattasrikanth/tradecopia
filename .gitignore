@@ -13,6 +13,7 @@ dist/
 build/
 out/
 artifacts/
+src/Installer/TradeCopia.Setup/payload.zip
 TestResults/
 test-results/
 playwright-report/

@@ -82,6 +82,23 @@ public class InstallRoundtripTests
     }
 
     [Fact]
+    public void Payload_bundle_extracts_zip_to_usable_directory()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "tradecopia-payload-" + Guid.NewGuid().ToString("N"));
+        var payload = Path.Combine(root, "payload");
+        Directory.CreateDirectory(Path.Combine(payload, "app"));
+        File.WriteAllText(Path.Combine(payload, "app", "TradeCopia.ControlPlane.exe"), "cp");
+        var zipDir = Path.Combine(root, "zip-only");
+        Directory.CreateDirectory(zipDir);
+        var zip = Path.Combine(zipDir, "payload.zip");
+        System.IO.Compression.ZipFile.CreateFromDirectory(payload, zip);
+        var extracted = PayloadBundle.ExtractZip(zip);
+        Assert.True(File.Exists(Path.Combine(extracted, "app", "TradeCopia.ControlPlane.exe")));
+        var resolved = PayloadBundle.Resolve(zipDir);
+        Assert.True(File.Exists(Path.Combine(resolved, "app", "TradeCopia.ControlPlane.exe")));
+    }
+
+    [Fact]
     public void Upgrade_replaces_version_file()
     {
         var root = Path.Combine(Path.GetTempPath(), "tradecopia-up-" + Guid.NewGuid().ToString("N"));

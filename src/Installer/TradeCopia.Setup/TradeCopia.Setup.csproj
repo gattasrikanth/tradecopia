@@ -15,4 +15,8 @@
     <ProjectReference Include="..\..\Shared\TradeCopia.Platform\TradeCopia.Platform.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="payload.zip" Condition="Exists('payload.zip')" />
+  </ItemGroup>
+
 </Project>

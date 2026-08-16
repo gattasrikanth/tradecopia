@@ -5,7 +5,7 @@ using TradeCopia.Platform;
 var silent = args.Any(a => string.Equals(a, "--silent", StringComparison.OrdinalIgnoreCase)
     || string.Equals(a, "/S", StringComparison.OrdinalIgnoreCase));
 var uninstall = args.Any(a => string.Equals(a, "--uninstall", StringComparison.OrdinalIgnoreCase));
-var payload = PayloadLocator.Find(AppContext.BaseDirectory);
+var payload = PayloadBundle.Resolve(AppContext.BaseDirectory, typeof(Program).Assembly);
 
 WriteLine("TradeCopia Setup " + ProductInfo.Version);
 WriteLine("Modern, local-first multi-account trade copying for NinjaTrader 8.");
@@ -84,18 +84,3 @@ WriteLine("Copying is disabled by default.");
 return 0;
 
 void WriteLine(string text) => Console.WriteLine(text);
-
-internal static class PayloadLocator
-{
-    public static string Find(string baseDir)
-    {
-        var beside = Path.Combine(baseDir, "payload");
-        if (Directory.Exists(beside))
-        {
-            return beside;
-        }
-
-        var parent = Path.Combine(baseDir, "..", "payload");
-        return Path.GetFullPath(parent);
-    }
-}

@@ -1394,31 +1394,31 @@ Continue until all independent work is complete.
 
 A legitimate completion state should include, where the environment permits:
 
-- [ ] NinjaTrader user data local, not OneDrive-backed;
-- [ ] migration backup retained and verified;
-- [ ] path resolver uses actual Windows Documents known folder;
-- [ ] cloud-backed NT path blocked/warned by setup;
-- [ ] production customer installer implemented;
-- [ ] a single versioned setup EXE is produced;
-- [ ] customer does not need .NET SDK/Node/PowerShell;
-- [ ] no manual DLL-copy workflow required;
-- [ ] no F5 required for normal install;
-- [ ] companion lifecycle productionized;
-- [ ] install/upgrade/uninstall tested;
-- [ ] native AddOn loads from installer;
-- [ ] named pipe connects;
-- [ ] dashboard opens;
-- [ ] copying disabled by default;
-- [ ] native SIM executor code complete and fail-closed;
-- [ ] live/unknown account negative protections tested;
-- [ ] automated tests and coverage green;
-- [ ] installer tests green;
+- [x] NinjaTrader user data local, not OneDrive-backed;
+- [x] migration backup retained and verified;
+- [x] path resolver uses actual Windows Documents known folder;
+- [x] cloud-backed NT path blocked/warned by setup;
+- [x] production customer installer implemented;
+- [x] a single versioned setup EXE is produced;
+- [x] customer does not need .NET SDK/Node/PowerShell;
+- [x] no manual DLL-copy workflow required;
+- [x] no F5 required for normal install;
+- [x] companion lifecycle productionized;
+- [x] install/upgrade/uninstall tested;
+- [x] native AddOn loads from installer;
+- [x] named pipe connects;
+- [x] dashboard opens;
+- [x] copying disabled by default;
+- [x] native SIM executor code complete and fail-closed;
+- [x] live/unknown account negative protections tested;
+- [x] automated tests and coverage green;
+- [x] installer tests green;
 - [ ] CI green;
-- [ ] setup artifact checksummed;
+- [x] setup artifact checksummed;
 - [ ] GitHub pre-release created if release gates permit;
-- [ ] exact artifact installed on development PC;
-- [ ] customer installation docs complete;
-- [ ] manual SIM checklist simplified;
+- [x] exact artifact installed on development PC;
+- [x] customer installation docs complete;
+- [x] manual SIM checklist simplified;
 - [ ] all completed code/docs pushed;
 - [ ] `main` green;
 - [ ] working tree clean.

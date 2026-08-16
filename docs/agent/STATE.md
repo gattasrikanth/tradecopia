@@ -4,34 +4,35 @@ Last updated: 2026-08-16
 Current branch: main
 HEAD: see `git rev-parse HEAD` (do not add pin-only SHA commits)
 Current phase: Installer / OneDrive / SIM-certification plan
-Phase status: IN_PROGRESS. Not Stable. Not live-certified.
+Phase status: COMPLETE_ALPHA (independent work). Not Stable. Not live-certified.
 
 ## Completed
 
-- Domain coverage gate met (coverlet line>=95, branch>=90).
-- OS named-pipe engine host + companion client; handshake; ExecuteOrder rejected.
-- Pause/disable fail closed when engine disconnected (503 engine-disconnected).
-- Shipped `TradeCopiaEngineHost.Start()` / `EngineRuntime.Start()` host `NamedPipeEngineHost`.
-- Control plane retries attach; session snapshot mutates on pause/disable/resume.
-- SIM fail-closed executor wrapper exists; copying starts disabled.
+- Documents known folder is local (`%USERPROFILE%\Documents`), not OneDrive.
+- NinjaTrader 8 user-data copied to the local Documents tree; OneDrive copy retained; backup under local `TradeCopia-Backups`.
+- Known-folder resolver + cloud-path preflight; setup blocks OneDrive NT trees.
+- Per-user installer engine, setup host, launcher, companion mutex.
+- No-F5 native deploy copies `TradeCopia.*` only into `bin\Custom`.
+- SIM native submit gated on official `Provider` Simulator/Playback; live/unknown fail closed.
+- Dogfood install from setup on this machine; copying starts disabled.
 
 ## Current invariants / locked decisions
 
 - Copying starts disabled. No generic order-entry API.
 - Bind 127.0.0.1 only. CSRF required on POST.
-- Simulation identity fail-closed.
-- Pause/disable require a connected engine pipe and mutate the session snapshot.
+- Simulation identity fail-closed at the native execution boundary.
 - Cloud-backed NinjaTrader user-data is unsupported for normal install.
+- NinjaTrader Welcome login is owned by Windows Trading Backbone, not TradeCopia.
 
 ## Tests last run
 
-Prior Alpha slice: 135 automated tests; Domain coverlet 95.52 / 91.41; `ci` green on `0c6b111`.
+Recorded in the implementation report for this slice.
 
 ## Known blockers
 
-- Windows Documents known folder currently resolves under OneDrive. Local `%USERPROFILE%\Documents` exists but does not contain NinjaTrader 8.
-- Public CI cannot compile NT-referenced AddOn.
-- Manual owner SIM trades remain owner-only.
+- Public CI cannot compile NT-referenced AddOn (no proprietary assemblies).
+- Manual owner SIM trade matrix (S1–S10) remains owner-only.
+- Unsigned Alpha may show SmartScreen/UAC (owner).
 
 ## Active subagents/worktrees
 
@@ -39,4 +40,4 @@ Prior Alpha slice: 135 automated tests; Domain coverlet 95.52 / 91.41; `ci` gree
 
 ## Next exact action
 
-Execute `docs/architecture/ONEDRIVE-INSTALLER-RELEASE-PLAN.md`: path resolver, NT user-data backup/migration off OneDrive, customer installer, no-F5 AddOn deploy, SIM native executor, release artifact, dogfood setup EXE.
+Owner-only: backbone NT login after reboot if needed; run `docs/testing/manual-sim-certification.md` on SIM accounts. Do not label Stable.

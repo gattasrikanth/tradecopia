@@ -43,14 +43,18 @@ else {
     Write-Host "NinjaTrader assemblies not present; setup payload ships without native AddOn DLLs."
 }
 
+$embeddedZip = Join-Path $root 'src\Installer\TradeCopia.Setup\payload.zip'
+if (Test-Path $embeddedZip) { Remove-Item $embeddedZip -Force }
+Compress-Archive -Path (Join-Path $payload '*') -DestinationPath $embeddedZip -Force
+
 dotnet publish "$root\src\Installer\TradeCopia.Setup\TradeCopia.Setup.csproj" `
     -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true `
     -o (Join-Path $OutputDir 'setup')
+Remove-Item $embeddedZip -Force -ErrorAction SilentlyContinue
 
 $setupName = "TradeCopia-Setup-$version.exe"
 Copy-Item -Recurse -Force $payload (Join-Path $OutputDir 'setup\payload')
 Copy-Item -Force (Join-Path $OutputDir "setup\TradeCopia-Setup-$version.exe") (Join-Path $OutputDir $setupName)
-Copy-Item -Recurse -Force $payload (Join-Path $OutputDir 'payload')
 
 $hash = Get-FileHash -Algorithm SHA256 (Join-Path $OutputDir $setupName)
 Set-Content -Path (Join-Path $OutputDir "$setupName.sha256") -Value ($hash.Hash + '  ' + $setupName) -Encoding ascii

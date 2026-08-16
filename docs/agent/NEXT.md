@@ -1,6 +1,5 @@
 # Next actions
 
-1. Implement Windows Documents known-folder resolver and cloud-path preflight.
-2. Back up and migrate NinjaTrader user-data off OneDrive onto the local Documents folder.
-3. Build the customer `TradeCopia-Setup-*.exe`, no-F5 AddOn deploy, self-contained companion, fail-closed SIM executor, and GitHub pre-release artifacts.
-4. Dogfood the real setup EXE. Do not label Stable or live-certified.
+1. Owner: if NinjaTrader is on Welcome, use Windows Trading Backbone login helper — do not start `NinjaTrader.exe` raw.
+2. Owner: run the manual SIM certification matrix on SIM accounts only.
+3. Keep `main` green. Do not label Stable or live-certified.

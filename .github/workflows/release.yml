@@ -40,14 +40,21 @@ jobs:
             artifacts/package/TradeCopia-Setup-*.exe
             artifacts/package/TradeCopia-Setup-*.exe.sha256
             artifacts/package/README.txt
-      - name: Create GitHub pre-release
+      - name: Create GitHub pre-release if missing
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" `
-            artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe `
-            artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe.sha256 `
-            artifacts/package/README.txt `
-            --prerelease `
-            --title "TradeCopia ${{ github.ref_name }} (Alpha)" `
-            --notes "Alpha / automated tests only. Not live-certified. Copying starts disabled. Unsigned SmartScreen warning is expected."
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release already exists; not overwriting (may include native payload from an NT machine)."
+          } else {
+            gh release create $tag `
+              artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe `
+              artifacts/package/TradeCopia-Setup-0.1.0-alpha.1.exe.sha256 `
+              artifacts/package/README.txt `
+              --prerelease `
+              --title "TradeCopia $tag (Alpha)" `
+              --notes "Alpha / automated tests only. Not live-certified. Copying starts disabled. Unsigned SmartScreen warning is expected."
+          }
