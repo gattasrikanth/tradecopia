@@ -4,6 +4,7 @@ test('dashboard loads synthetic demo and requires CSRF for flatten', async ({ pa
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Overview');
   await expect(page.locator('body')).toContainText('disabled');
+  await expect(page.locator('body')).toContainText('Disconnected');
   await expect(page.locator('body')).not.toContainText('live-certified');
   await expect(page.locator('body')).toContainText('SIM-');
 

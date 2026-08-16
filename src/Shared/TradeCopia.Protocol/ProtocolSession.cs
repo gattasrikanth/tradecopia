@@ -105,6 +105,8 @@ namespace TradeCopia.Protocol
         private bool _handshook;
         private string _sessionId;
         private bool _connected = true;
+        private string _engineState = "Disabled";
+        private bool _copyingEnabled;
 
         public ProtocolSession()
         {
@@ -114,6 +116,8 @@ namespace TradeCopia.Protocol
         public bool IsHandshook => _handshook;
         public bool IsConnected => _connected;
         public string SessionId => _sessionId;
+        public string EngineState => _engineState;
+        public bool CopyingEnabled => _copyingEnabled;
 
         public void Disconnect()
         {
@@ -126,6 +130,12 @@ namespace TradeCopia.Protocol
             _connected = true;
             _handshook = false;
             _sessionId = Guid.NewGuid().ToString("N");
+        }
+
+        public string SnapshotJson()
+        {
+            return "{\"engineState\":\"" + _engineState
+                + "\",\"copyingEnabled\":" + (_copyingEnabled ? "true" : "false") + "}";
         }
 
         public ProtocolValidationResult Handle(ProtocolEnvelope incoming)
@@ -153,7 +163,7 @@ namespace TradeCopia.Protocol
                         ProtocolMessageTypes.EngineHello,
                         DateTime.UtcNow,
                         _sessionId,
-                        "{\"capabilities\":[\"OrderMirror\"],\"copying\":\"Disabled\"}"));
+                        "{\"capabilities\":[\"OrderMirror\"],\"engineState\":\"" + _engineState + "\",\"copyingEnabled\":" + (_copyingEnabled ? "true" : "false") + "}"));
             }
 
             if (!_handshook)
@@ -163,16 +173,33 @@ namespace TradeCopia.Protocol
 
             if (string.Equals(incoming.MessageType, ProtocolMessageTypes.RequestSnapshot, StringComparison.Ordinal))
             {
-                return new ProtocolValidationResult(
-                    true,
-                    "snapshot",
-                    new ProtocolEnvelope(
-                        ProtocolLimits.CurrentVersion,
-                        Guid.NewGuid().ToString("N"),
-                        ProtocolMessageTypes.EngineStateSnapshot,
-                        DateTime.UtcNow,
-                        _sessionId,
-                        "{\"engineState\":\"Disabled\",\"copyingEnabled\":false}"));
+                return SnapshotReply("snapshot");
+            }
+
+            if (string.Equals(incoming.MessageType, ProtocolMessageTypes.PauseNewEntries, StringComparison.Ordinal))
+            {
+                _engineState = "PausedNewEntries";
+                _copyingEnabled = false;
+                return SnapshotReply("paused");
+            }
+
+            if (string.Equals(incoming.MessageType, ProtocolMessageTypes.DisableGroup, StringComparison.Ordinal))
+            {
+                _engineState = "Disabled";
+                _copyingEnabled = false;
+                return SnapshotReply("disabled");
+            }
+
+            if (string.Equals(incoming.MessageType, ProtocolMessageTypes.ResumeNewEntries, StringComparison.Ordinal))
+            {
+                if (!string.Equals(_engineState, "PausedNewEntries", StringComparison.Ordinal))
+                {
+                    return Reject(incoming, "resume-only-from-pause");
+                }
+
+                _engineState = "Enabled";
+                _copyingEnabled = true;
+                return SnapshotReply("resumed");
             }
 
             return new ProtocolValidationResult(
@@ -184,7 +211,21 @@ namespace TradeCopia.Protocol
                     ProtocolMessageTypes.Heartbeat,
                     DateTime.UtcNow,
                     _sessionId,
-                    "{}"));
+                    SnapshotJson()));
+        }
+
+        private ProtocolValidationResult SnapshotReply(string reason)
+        {
+            return new ProtocolValidationResult(
+                true,
+                reason,
+                new ProtocolEnvelope(
+                    ProtocolLimits.CurrentVersion,
+                    Guid.NewGuid().ToString("N"),
+                    ProtocolMessageTypes.EngineStateSnapshot,
+                    DateTime.UtcNow,
+                    _sessionId,
+                    SnapshotJson()));
         }
 
         private static ProtocolValidationResult Reject(ProtocolEnvelope incoming, string reason)

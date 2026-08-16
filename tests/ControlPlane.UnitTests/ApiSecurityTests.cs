@@ -2,8 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using TradeCopia.Analytics;
 using TradeCopia.ControlPlane.Security;
+using TradeCopia.Native.Adapter;
 
 namespace TradeCopia.ControlPlane.UnitTests;
 
@@ -66,6 +68,44 @@ public class ApiSecurityTests : IClassFixture<ApiFactory>
         var client = _factory.CreateClient();
         var response = await client.PostAsJsonAsync("/api/v1/groups/demo/pause-new-entries", new { });
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Pause_through_shipped_runtime_updates_status_snapshot()
+    {
+        await using var factory = new ApiFactory();
+        var options = factory.Services.GetRequiredService<ControlPlaneOptions>();
+        using var runtime = new EngineRuntime(options.PipeName);
+        runtime.Start();
+
+        var client = factory.CreateClient();
+        var connected = false;
+        for (var i = 0; i < 40; i++)
+        {
+            var probe = await client.GetStringAsync("/api/v1/system/status");
+            if (probe.Contains("\"engineConnected\":true", StringComparison.Ordinal))
+            {
+                connected = true;
+                break;
+            }
+
+            await Task.Delay(50);
+        }
+
+        Assert.True(connected);
+
+        var bootstrap = await client.GetFromJsonAsync<Bootstrap>("/api/v1/system/bootstrap");
+        client.DefaultRequestHeaders.Add("X-CSRF-Token", bootstrap!.CsrfToken);
+        var pause = await client.PostAsJsonAsync("/api/v1/groups/demo/pause-new-entries", new { });
+        Assert.Equal(HttpStatusCode.OK, pause.StatusCode);
+        var pauseBody = await pause.Content.ReadAsStringAsync();
+        Assert.Contains("\"accepted\":true", pauseBody);
+
+        var after = await client.GetStringAsync("/api/v1/system/status");
+        Assert.Contains("PausedNewEntries", after);
+        Assert.Contains("\"copyingEnabled\":false", after);
+        Assert.Equal("PausedNewEntries", runtime.Session.EngineState);
+        Assert.False(runtime.Session.CopyingEnabled);
     }
 
     [Fact]

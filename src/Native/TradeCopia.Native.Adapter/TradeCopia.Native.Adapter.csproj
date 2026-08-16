@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\TradeCopia.Domain\TradeCopia.Domain.csproj" />
+    <ProjectReference Include="..\..\Shared\TradeCopia.Protocol\TradeCopia.Protocol.csproj" />
   </ItemGroup>
 
 </Project>

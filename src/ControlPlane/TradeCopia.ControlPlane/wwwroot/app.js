@@ -34,12 +34,13 @@ const pages = {
     document.getElementById("status-pill").textContent = health.groupHealth;
     document.getElementById("alerts").innerHTML =
       "<div class=\"warning\">Copying starts disabled. This dashboard cannot place discretionary trades.</div>";
+    var engineLabel = status.engineConnected ? status.engineState : "Unknown";
     render("Overview",
       "<div class=\"grid\">" +
-      card("Engine", status.details.engineState) +
-      card("Copying", status.details.copyingEnabled ? "Enabled" : "Disabled") +
+      card("Engine", engineLabel) +
+      card("Copying", status.copyingEnabled ? "Enabled" : "Disabled") +
+      card("Engine link", status.engineConnected ? "Connected" : "Disconnected") +
       card("Demo mode", String(status.demoMode)) +
-      card("Telemetry", status.details.telemetry) +
       "</div><h3>Groups</h3>" +
       table(["Name", "Leader", "State", "Health"], groups.map((g) =>
         "<tr><td>" + g.name + "</td><td>" + g.leader + "</td><td>" + g.enabledState + "</td><td>" + g.health + "</td></tr>")) +

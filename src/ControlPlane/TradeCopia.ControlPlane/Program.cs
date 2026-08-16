@@ -24,7 +24,8 @@ if (string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparis
     {
         DemoMode = true,
         Port = ControlPlaneOptions.DefaultPort,
-        DataDirectory = Path.Combine(Path.GetTempPath(), "tradecopia-tests", Guid.NewGuid().ToString("N"))
+        DataDirectory = Path.Combine(Path.GetTempPath(), "tradecopia-tests", Guid.NewGuid().ToString("N")),
+        PipeName = TradeCopia.Protocol.EnginePipeName.FromMaterial("testing-" + Guid.NewGuid().ToString("N"))
     };
 }
 
@@ -44,6 +45,9 @@ builder.Services.AddSingleton<EngineLink>();
 builder.Services.AddSingleton(_ => new LocalDatabase(options.DataDirectory, "control.db"));
 
 var app = builder.Build();
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+var engineLink = app.Services.GetRequiredService<EngineLink>();
+engineLink.StartRetryAttach(options.PipeName, lifetime.ApplicationStopping);
 app.UseMiddleware<SecurityMiddleware>();
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -56,6 +60,8 @@ api.MapGet("/system/status", (ControlPlaneOptions opt, DemoCatalog demo, EngineL
         opt.BindAddress,
         opt.DemoMode,
         engineConnected = engine.IsConnected,
+        engineState = engine.EngineState,
+        copyingEnabled = engine.CopyingEnabled,
         details = demo.SystemStatus()
     }));
 api.MapGet("/system/version", () => Results.Json(new { product = "TradeCopia", version = "0.1.0-alpha", commit = "local" }));
@@ -75,12 +81,30 @@ api.MapGet("/groups", (DemoCatalog demo) => Results.Json(demo.Groups()));
 api.MapGet("/live/trades", (DemoCatalog demo) => Results.Json(demo.LiveTrades()));
 api.MapGet("/live/orders", (DemoCatalog demo) => Results.Json(demo.LiveTrades()));
 api.MapGet("/live/divergences", (DemoCatalog demo) => Results.Json(demo.Divergences()));
-api.MapGet("/live/health", () => Results.Json(new { groupHealth = "UNKNOWN", reason = "Engine disconnected. Unknown is never healthy." }));
+api.MapGet("/live/health", (EngineLink engine) => Results.Json(new
+{
+    groupHealth = "UNKNOWN",
+    reason = engine.IsConnected
+        ? "Engine connected. Unknown is never healthy without a live group snapshot."
+        : "Engine disconnected. Unknown is never healthy."
+}));
 api.MapGet("/journal/trades", (DemoCatalog demo) => Results.Json(demo.Journal()));
 api.MapGet("/analytics/overview", (DemoCatalog demo) => Results.Json(demo.Analytics()));
 api.MapGet("/analytics/latency", (DemoCatalog demo) => Results.Json(demo.Analytics()));
 api.MapGet("/analytics/reliability", (DemoCatalog demo) => Results.Json(demo.Analytics()));
-api.MapGet("/diagnostics/status", (DemoCatalog demo) => Results.Json(demo.Diagnostics()));
+api.MapGet("/diagnostics/status", (EngineLink engine, ControlPlaneOptions opt) => Results.Json(new
+{
+    controlPlane = "running",
+    engine = engine.IsConnected ? "connected" : "disconnected",
+    engineState = engine.EngineState,
+    copyingEnabled = engine.CopyingEnabled,
+    namedPipe = opt.PipeName,
+    sqlite = "ok",
+    lastError = engine.IsConnected
+        ? "None."
+        : "Engine not connected. Dashboard is control plane only.",
+    orderSubmission = engine.CopyingEnabled ? "enabled" : "disabled"
+}));
 api.MapGet("/diagnostics/errors", () => Results.Json(Array.Empty<object>()));
 
 api.MapPost("/groups/{groupId}/pause-new-entries", (string groupId, EngineLink engine) =>

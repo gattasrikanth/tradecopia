@@ -10,6 +10,9 @@ first numbered release exists.
 
 ### Added
 
+- Shipped engine runtime hosts the OS named-pipe server; control plane retries attach and surfaces live `engineState` / `copyingEnabled`.
+- Protocol session applies pause / disable / resume to the observable snapshot (not a Heartbeat ACK stub).
+
 - Public repository bootstrap with product, architecture, and agent-mandate documents.
 - Apache-2.0 license and open-source governance files.
 - Agent continuity files and resume script.

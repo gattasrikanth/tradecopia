@@ -1,3 +1,5 @@
+using TradeCopia.Protocol;
+
 namespace TradeCopia.ControlPlane;
 
 public sealed class ControlPlaneOptions
@@ -13,6 +15,7 @@ public sealed class ControlPlaneOptions
         "TradeCopia",
         "data");
     public string WebRoot { get; init; } = "wwwroot";
+    public string PipeName { get; init; } = TradeCopia.Protocol.EnginePipeName.ForCurrentUser();
 
     public static ControlPlaneOptions FromArgs(string[] args)
     {

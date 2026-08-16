@@ -10,6 +10,18 @@ public sealed class EngineLink : IDisposable
 {
     private readonly object _gate = new();
     private NamedPipeCompanionClient? _client;
+    private string _engineState = "Unknown";
+    private bool _copyingEnabled;
+
+    public string EngineState
+    {
+        get { lock (_gate) { return _engineState; } }
+    }
+
+    public bool CopyingEnabled
+    {
+        get { lock (_gate) { return _copyingEnabled; } }
+    }
 
     public bool IsConnected
     {
@@ -51,6 +63,19 @@ public sealed class EngineLink : IDisposable
             }
 
             _client = client;
+            RememberSnapshot(result.Reply.PayloadJson);
+            var snap = client.Send(new ProtocolEnvelope(
+                ProtocolLimits.CurrentVersion,
+                Guid.NewGuid().ToString("N"),
+                ProtocolMessageTypes.RequestSnapshot,
+                DateTime.UtcNow,
+                string.Empty,
+                "{}"));
+            if (snap.Accepted)
+            {
+                RememberSnapshot(snap.Reply.PayloadJson);
+            }
+
             return true;
         }
     }
@@ -80,7 +105,59 @@ public sealed class EngineLink : IDisposable
                 DateTime.UtcNow,
                 string.Empty,
                 "{}");
-            return _client.Send(envelope);
+            var result = _client.Send(envelope);
+            if (result.Accepted)
+            {
+                RememberSnapshot(result.Reply.PayloadJson);
+            }
+
+            return result;
+        }
+    }
+
+    public void StartRetryAttach(string pipeName, CancellationToken token)
+    {
+        Task.Run(() =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                if (!IsConnected)
+                {
+                    TryAttach(pipeName, 250);
+                }
+
+                token.WaitHandle.WaitOne(1000);
+            }
+        }, token);
+    }
+
+    private void RememberSnapshot(string payload)
+    {
+        if (string.IsNullOrEmpty(payload))
+        {
+            return;
+        }
+
+        if (payload.Contains("\"engineState\":\"PausedNewEntries\"", StringComparison.Ordinal))
+        {
+            _engineState = "PausedNewEntries";
+        }
+        else if (payload.Contains("\"engineState\":\"Enabled\"", StringComparison.Ordinal))
+        {
+            _engineState = "Enabled";
+        }
+        else if (payload.Contains("\"engineState\":\"Disabled\"", StringComparison.Ordinal))
+        {
+            _engineState = "Disabled";
+        }
+
+        if (payload.Contains("\"copyingEnabled\":true", StringComparison.Ordinal))
+        {
+            _copyingEnabled = true;
+        }
+        else if (payload.Contains("\"copyingEnabled\":false", StringComparison.Ordinal))
+        {
+            _copyingEnabled = false;
         }
     }
 

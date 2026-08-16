@@ -30,6 +30,11 @@ namespace TradeCopia.Protocol
                 return Prefix + hex;
             }
         }
+
+        public static string ForCurrentUser()
+        {
+            return FromMaterial(Environment.UserName + "|" + Environment.MachineName);
+        }
     }
 
     public sealed class NamedPipeEngineHost : IDisposable

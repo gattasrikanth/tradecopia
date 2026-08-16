@@ -46,10 +46,10 @@ See `docs/architecture/SYSTEM-DESIGN.md` for the locked design.
 | Area | Status |
 | --- | --- |
 | Repository / governance | Done |
-| Shared domain / fake engine | In progress (tests green; coverage gate not yet met) |
-| Native NinjaTrader AddOn | Compiles locally against NT 8.1.8.2; **no order submit** |
-| Local control plane | Loopback API + security + demo data |
-| Browser dashboard | Local SPA at `http://127.0.0.1:17841` |
+| Shared domain / fake engine | Domain coverlet gate met (line >= 95, branch >= 90) |
+| Native NinjaTrader AddOn | Compiles locally against NT 8.1.8.2; hosts named pipe; **no order submit** |
+| Local control plane | Loopback API + security + retry-attach to engine pipe |
+| Browser dashboard | Local SPA at `http://127.0.0.1:17841` (live engine snapshot fields) |
 | Manual NT SIM certification | Not started |
 
 ## Run the local dashboard

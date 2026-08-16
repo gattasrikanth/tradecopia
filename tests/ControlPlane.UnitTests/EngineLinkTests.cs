@@ -26,6 +26,40 @@ public class EngineLinkTests
         Assert.True(link.IsConnected);
         var pause = link.Send(ProtocolMessageTypes.PauseNewEntries);
         Assert.True(pause.Accepted);
+        Assert.Equal("PausedNewEntries", link.EngineState);
+        Assert.False(link.CopyingEnabled);
+        Assert.Contains("PausedNewEntries", pause.Reply.PayloadJson);
+    }
+
+    [Fact]
+    public void Retry_attach_connects_to_shipped_engine_runtime()
+    {
+        var pipe = EnginePipeName.FromMaterial("retry-" + Guid.NewGuid().ToString("N"));
+        using var runtime = new TradeCopia.Native.Adapter.EngineRuntime(pipe);
+        runtime.Start();
+        using var link = new EngineLink();
+        using var cts = new CancellationTokenSource();
+        link.StartRetryAttach(pipe, cts.Token);
+        Assert.True(WaitConnected(link));
+        cts.Cancel();
+        Assert.True(link.IsConnected);
+        Assert.Equal("Disabled", link.EngineState);
+        Assert.False(link.CopyingEnabled);
+    }
+
+    private static bool WaitConnected(EngineLink link)
+    {
+        for (var i = 0; i < 40; i++)
+        {
+            if (link.IsConnected)
+            {
+                return true;
+            }
+
+            Thread.Sleep(50);
+        }
+
+        return false;
     }
 
     private static bool WaitAttach(EngineLink link, string pipe)

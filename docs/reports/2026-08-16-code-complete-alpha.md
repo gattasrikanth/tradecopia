@@ -4,9 +4,8 @@
 
 ## Commits
 
-- Starting `main` at goal resume: `eaa0ba190229f1e8ef38bf23860c39246ca8954c`
-- Feature tip (named-pipe + fail-closed pause/disable + domain coverage gate): `8b1d2938a86128bf1a99f2ca6f150eccce561f26`
-- Verified `origin/main` tip at last full verification: `e97f3792d38bdfe35353b7fd81b8f94a7ee8a334`
+- Parent `origin/main` before this wiring: `a0468ac92f7813d0e95d794efaf58eb56959cedd`
+- This report describes the pipe-host + session-state commit on `main`. Read the SHA from git; do not add a pin-only follow-up commit.
 
 Repository: https://github.com/gattasrikanth/tradecopia
 
@@ -15,38 +14,36 @@ Repository: https://github.com/gattasrikanth/tradecopia
 - Domain copier brain (Order Mirror) with loop prevention, fingerprint idempotency, topology, sizing, mapping, non-reversing scale-out, visible rejects, stale reconcile rejection, restart/disable
 - Domain coverlet **line 95.52% / branch 91.41%** (gates met). NT AddOn wrappers remain out of public CI only (`docs/development/coverage-exceptions.md`).
 - OS named-pipe transport: engine `NamedPipeEngineHost` (server), companion `NamedPipeCompanionClient` / `EngineLink` (client). Handshake + `ExecuteOrder` rejected.
+- **Shipped hosts use the pipe:** `EngineRuntime.Start()` / `TradeCopiaEngineHost.Start()` construct and start `NamedPipeEngineHost`. The NT AddOn calls that `Start()`. Control-plane `Program` calls `EngineLink.StartRetryAttach`.
+- `ProtocolSession` applies pause / disable / resume to observable `engineState` / `copyingEnabled` and replies with `EngineStateSnapshot`.
 - Pause/disable **fail closed** with `503 engine-disconnected` when no pipe (does not return `accepted:true`).
 - SIM fail-closed executor; default `DisabledOrderExecutor`
-- Loopback control plane + dashboard; CSRF; no generic order-entry API
+- Loopback control plane + dashboard; CSRF; no generic order-entry API; dashboard shows live engine snapshot fields
 - Playwright dashboard flow (synthetic)
 
 ## Automated tests (two consecutive `pwsh ./scripts/test.ps1`)
 
 | Assembly | Passed |
 | --- | --- |
-| Protocol.UnitTests | 15 |
+| Protocol.UnitTests | 18 |
 | ArchitectureTests | 4 |
-| Domain.UnitTests | 98 |
-| ControlPlane.UnitTests | 11 |
-| **Total** | **128** |
+| Domain.UnitTests | 100 |
+| ControlPlane.UnitTests | 13 |
+| **Total** | **135** |
 
 Both runs exit 0.
 
 ## Live control-plane probe (twice)
 
-- bind `127.0.0.1`, `copyingEnabled: false`, `engineConnected: false`
+- bind `127.0.0.1`, `copyingEnabled: false`, `engineConnected: false`, `engineState: Unknown`
 - POST pause without CSRF → 403
-- POST pause with CSRF, no engine → 503
-- POST `/api/v1/orders` with CSRF → 404
+- POST pause with CSRF, no engine → 503 `engine-disconnected` (`accepted:false`)
+- POST `/api/v1/orders` with CSRF → 404 `no-generic-order-entry`
 
 ## Security
 
-- `scan-secrets.ps1` OK (164 files)
+- `scan-secrets.ps1` OK (167 files)
 - No NinjaTrader DLLs in git
-
-## CI
-
-`ci` on `8b1d293`: success (see scratch `ci.txt`).
 
 ## Remaining (classified)
 
@@ -58,6 +55,6 @@ Both runs exit 0.
 
 ## Confirmation
 
-- Completed work pushed to `origin/main`
+- Completed work is intended for `origin/main`
 - Product is not live-certified
 - Copying starts disabled

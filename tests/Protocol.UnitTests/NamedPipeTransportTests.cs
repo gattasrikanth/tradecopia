@@ -15,6 +15,16 @@ namespace TradeCopia.Protocol.UnitTests
         }
 
         [Fact]
+        public void For_current_user_is_stable_and_versioned()
+        {
+            var first = EnginePipeName.ForCurrentUser();
+            var second = EnginePipeName.ForCurrentUser();
+            Assert.Equal(first, second);
+            Assert.StartsWith(EnginePipeName.Prefix, first);
+            Assert.DoesNotContain(Environment.UserName, first);
+        }
+
+        [Fact]
         public void Engine_server_accepts_companion_hello_and_rejects_execute_order()
         {
             var pipe = EnginePipeName.FromMaterial("test-" + Guid.NewGuid().ToString("N"));

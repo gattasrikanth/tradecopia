@@ -1,15 +1,14 @@
 using System;
-using System.Diagnostics;
 using NinjaTrader.Cbi;
 using NinjaTrader.NinjaScript;
-using TradeCopia.Domain;
-using TradeCopia.Native.Adapter;
 
 namespace NinjaTrader.NinjaScript.AddOns
 {
     /// <summary>
     /// Native AddOn entry. Copying starts disabled. This type never calls
     /// Account.Submit/Change/Cancel/Flatten in the current Alpha.
+    /// Starts the shipped <see cref="TradeCopia.Native.TradeCopiaEngineHost"/>,
+    /// which hosts the named-pipe engine server.
     /// </summary>
     public class TradeCopiaAddOn : AddOnBase
     {
@@ -38,43 +37,6 @@ namespace NinjaTrader.NinjaScript.AddOns
             {
                 return;
             }
-        }
-    }
-}
-
-namespace TradeCopia.Native
-{
-    public sealed class TradeCopiaEngineHost
-    {
-        public const string ProductName = "TradeCopia";
-        public static readonly EngineSafetyState DefaultState = EngineSafetyState.Disabled;
-
-        private readonly SubscriptionRegistry _subscriptions = new SubscriptionRegistry();
-        private readonly DisabledOrderExecutor _executor = new DisabledOrderExecutor();
-
-        public EngineSafetyState State { get; private set; } = DefaultState;
-        public SubscriptionRegistry Subscriptions => _subscriptions;
-        public INativeOrderExecutor Executor => _executor;
-
-        public void Start()
-        {
-            State = EngineSafetyState.Disabled;
-            _subscriptions.Register("engine:status");
-        }
-
-        public void Stop()
-        {
-            _subscriptions.UnregisterAll();
-            State = EngineSafetyState.Disabled;
-        }
-
-        public static void OpenDashboard(int port)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "http://127.0.0.1:" + port,
-                UseShellExecute = true
-            });
         }
     }
 }

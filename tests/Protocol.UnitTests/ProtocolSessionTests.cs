@@ -86,5 +86,47 @@ namespace TradeCopia.Protocol.UnitTests
             Assert.False(result.Accepted);
             Assert.Equal("unknown-message-type", result.Reason);
         }
+
+        [Fact]
+        public void Pause_and_disable_change_observable_snapshot()
+        {
+            var session = new ProtocolSession();
+            session.Handle(Envelope(ProtocolMessageTypes.Hello));
+            Assert.Equal("Disabled", session.EngineState);
+            Assert.False(session.CopyingEnabled);
+
+            var paused = session.Handle(Envelope(ProtocolMessageTypes.PauseNewEntries));
+            Assert.True(paused.Accepted);
+            Assert.Equal(ProtocolMessageTypes.EngineStateSnapshot, paused.Reply.MessageType);
+            Assert.Equal("PausedNewEntries", session.EngineState);
+            Assert.False(session.CopyingEnabled);
+            Assert.Contains("\"engineState\":\"PausedNewEntries\"", paused.Reply.PayloadJson);
+            Assert.Contains("\"copyingEnabled\":false", paused.Reply.PayloadJson);
+
+            var snap = session.Handle(Envelope(ProtocolMessageTypes.RequestSnapshot));
+            Assert.Contains("\"engineState\":\"PausedNewEntries\"", snap.Reply.PayloadJson);
+
+            var disabled = session.Handle(Envelope(ProtocolMessageTypes.DisableGroup));
+            Assert.Equal("Disabled", session.EngineState);
+            Assert.Contains("\"engineState\":\"Disabled\"", disabled.Reply.PayloadJson);
+        }
+
+        [Fact]
+        public void Resume_from_pause_enables_copying_in_snapshot()
+        {
+            var session = new ProtocolSession();
+            session.Handle(Envelope(ProtocolMessageTypes.Hello));
+            session.Handle(Envelope(ProtocolMessageTypes.PauseNewEntries));
+            var resume = session.Handle(Envelope(ProtocolMessageTypes.ResumeNewEntries));
+            Assert.True(resume.Accepted);
+            Assert.True(session.CopyingEnabled);
+            Assert.Equal("Enabled", session.EngineState);
+            Assert.Contains("\"copyingEnabled\":true", resume.Reply.PayloadJson);
+
+            session.Handle(Envelope(ProtocolMessageTypes.DisableGroup));
+            var bad = session.Handle(Envelope(ProtocolMessageTypes.ResumeNewEntries));
+            Assert.False(bad.Accepted);
+            Assert.False(session.CopyingEnabled);
+        }
     }
 }
